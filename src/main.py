@@ -473,10 +473,14 @@ def recup_donne():
     planning.set_liste_eleve(lire_fichiers())
     msgbox = tk.messagebox.showinfo(
         title="Sélection de fichier", message="Veuillez sélectionner le fichier que vous souhaitez remplir")
-    varjour.set(jour.j)
     chemin = tk.Tk()
     chemin.withdraw()                 # pour ne pas afficher la fenêtre Tk
     name = askopenfilename()
+    if "mercredi" in name.lower():
+        jour.set_mercredi()
+    else:
+        jour.set_samedi()
+    varjour.set(jour.j)
     planning.set_nom_fichier(name)
     planning.cheval.clear()
     planning.liste_heure.clear()
@@ -849,10 +853,6 @@ historique.place(x=1000, y=70)
 
 # Création du menu
 menubar = Menu(window)
-# Création d'un sous-menu
-filemenu = Menu(menubar, tearoff=0)
-filemenu.add_command(label="Mercredi", command=recup_donne_mercredi)
-filemenu.add_command(label="Samedi", command=recup_donne_samedi)
 
 # Création d'une liste déroulante pour sélectionner l'heure
 listeCombo = ttk.Combobox(window)
@@ -877,7 +877,7 @@ def ajout_des_commande_lena():
 
 
 # Ajout des éléments au menu
-menubar.add_cascade(label="Jour", menu=filemenu)
+menubar.add_cascade(label="Jour", command=recup_donne)
 menubar.add_command(label="Quitter!", command=window.quit)
 
 # Affichage du menu dans la fenêtre
