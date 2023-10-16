@@ -648,7 +648,7 @@ def add_eleve():
 def add_cheval():
     present = any(para_input_chevaux.get().upper() == tup[1]
                   for tup in chevaux)
-    if not present:
+    if not present and len(chevaux)+1 >= int(para_input_ind_chevaux.get()):
 
         for cheval in chevaux:
             if cheval[0] >= int(para_input_ind_chevaux.get()):
@@ -660,12 +660,20 @@ def add_cheval():
 
 
 def suppr_cheval():
-    chevaux.remove(cheval)
-    for che in chevaux:
-        if che[0] >= cheval[0]:
-            che[0] -= 1
-    chevaux.sort()
-    remplirlisteboxcheval(chevaux)
+    if cheval in chevaux:
+        chevaux.remove(cheval)
+        for che in chevaux:
+            if che[0] >= cheval[0]:
+                che[0] -= 1
+        chevaux.sort()
+        remplirlisteboxcheval(chevaux)
+
+
+def ecrire_fichier_cheval(chevaux):
+    txt = ""
+    for cheval in chevaux:
+        txt += str(cheval[0]) + '\t' + cheval[1] + "\r"
+    return txt
 
 
 def suppr_eleve():
@@ -681,10 +689,11 @@ def suppr_eleve():
 
 def para_enregistrer():
     global parajour
-    print(parajour)
     fichier = open("liste_cavalier_" + parajour + ".txt", "w")
-    print(ecrire_fichier_cavalier(data))
     fichier.write(ecrire_fichier_cavalier(data))
+    fichier.close()
+    fichier = open("liste_cheval.txt", "w")
+    fichier.write(ecrire_fichier_cheval(chevaux))
     fichier.close()
 
 
@@ -765,10 +774,11 @@ def lire_fichier_chevaux():
     fichier.close()
     lignes = lignes.split("\n")
     for ligne in lignes:
-        if ligne[2] == '\t':
-            liste.append([int(ligne[:2]), ligne[3:]])
-        else:
-            liste.append([int(ligne[:2]), ligne[2:]])
+        if ligne != '':
+            if ligne[2] == '\t':
+                liste.append([int(ligne[:2]), ligne[3:]])
+            else:
+                liste.append([int(ligne[:2]), ligne[2:]])
     return liste
 
 
@@ -825,7 +835,6 @@ def cmp_heure(d):
         heure = d[:2]
     else:
         heure = d[0]
-    print(heure)
     return (int(heure))
 
 
@@ -1159,7 +1168,7 @@ def items_selected_cheval(event):
     global cheval
     # Indices des éléments sélectionnés
     selected_indices = para_listebox_chevaux.curselection()
-    cheval = para_listebox_chevaux.get(selected_indices)
+    cheval = list(para_listebox_chevaux.get(selected_indices))
 
 
 # Association de la fonction à l'événement de relâchement du bouton de la souris
