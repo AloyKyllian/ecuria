@@ -645,6 +645,29 @@ def add_eleve():
     visualiser_fichier_cavalier(data)
 
 
+def add_cheval():
+    present = any(para_input_chevaux.get().upper() == tup[1]
+                  for tup in chevaux)
+    if not present:
+
+        for cheval in chevaux:
+            if cheval[0] >= int(para_input_ind_chevaux.get()):
+                cheval[0] += 1
+        chevaux.append([int(para_input_ind_chevaux.get()),
+                        para_input_chevaux.get().upper()])
+        chevaux.sort()
+        remplirlisteboxcheval(chevaux)
+
+
+def suppr_cheval():
+    chevaux.remove(cheval)
+    for che in chevaux:
+        if che[0] >= cheval[0]:
+            che[0] -= 1
+    chevaux.sort()
+    remplirlisteboxcheval(chevaux)
+
+
 def suppr_eleve():
     global parajour
     liste = []
@@ -663,6 +686,12 @@ def para_enregistrer():
     print(ecrire_fichier_cavalier(data))
     fichier.write(ecrire_fichier_cavalier(data))
     fichier.close()
+
+
+def remplirlisteboxcheval(chevaux):
+    para_listebox_chevaux.delete(0, END)
+    for cheval in chevaux:
+        para_listebox_chevaux.insert(END, cheval)
 
 
 def remplirlisteboxeleve():
@@ -712,16 +741,35 @@ def interface_paramete():
     para_visu_fichier.place(x=700, y=360)
     para_label_historique.place(x=1000, y=40)
     para_historique.place(x=1000, y=70)
-    para_listebox_heure.place(x=20, y=70)
-    para_listebox_eleve.place(x=320, y=70)
+    para_listebox_heure.place(x=390, y=70)
+    para_listebox_eleve.place(x=690, y=70)
     para_listeCombo.place(x=5, y=5)
-    para_input_heure.place(x=180, y=140)
-    para_add_heure.place(x=180, y=170)
-    para_suppr_heure.place(x=180, y=200)
-    para_input_eleve.place(x=480, y=140)
-    para_add_eleve.place(x=480, y=170)
-    para_suppr_eleve.place(x=480, y=200)
-    para_suppr_enregistrer.place(x=520, y=500)
+    para_input_heure.place(x=550, y=140)
+    para_add_heure.place(x=550, y=170)
+    para_suppr_heure.place(x=550, y=200)
+    para_input_eleve.place(x=850, y=140)
+    para_add_eleve.place(x=850, y=170)
+    para_suppr_eleve.place(x=850, y=200)
+    para_suppr_enregistrer.place(x=590, y=500)
+    para_listebox_chevaux.place(x=20, y=70)
+    para_input_chevaux.place(x=180, y=140)
+    para_add_chevaux.place(x=180, y=170)
+    para_suppr_chevaux.place(x=180, y=200)
+    para_input_ind_chevaux.place(x=330, y=140)
+
+
+def lire_fichier_chevaux():
+    liste = []
+    fichier = open("liste_cheval.txt", "r")
+    lignes = fichier.read()
+    fichier.close()
+    lignes = lignes.split("\n")
+    for ligne in lignes:
+        if ligne[2] == '\t':
+            liste.append([int(ligne[:2]), ligne[3:]])
+        else:
+            liste.append([int(ligne[:2]), ligne[2:]])
+    return liste
 
 
 def lire_fichier_cavalier(jour):
@@ -1043,13 +1091,13 @@ menubar = Menu(window)
 
 # Ajout des éléments au menu
 sousmenu = Menu(menubar, tearoff=0)
-sousmenu.add_command(label="activer", command=mode_parametre)
-sousmenu.add_command(label="desactiver", command=mode_default)
+sousmenu.add_command(label="parametre", command=mode_parametre)
+sousmenu.add_command(label="principal", command=mode_default)
 
 
 # Ajout des éléments au menu
 menubar.add_command(label="Jour", command=recup_donne)
-menubar.add_cascade(label="Parametre", menu=sousmenu)
+menubar.add_cascade(label="Mode", menu=sousmenu)
 menubar.add_command(label="Quitter!", command=window.quit)
 
 # Affichage du menu dans la fenêtre
@@ -1084,7 +1132,8 @@ def items_selected_heure(event):
 para_listebox_heure.bind('<ButtonRelease-1>', items_selected_heure)
 
 
-para_listebox_eleve = tk.Listbox(window, width=25, height=45)
+para_listebox_eleve = tk.Listbox(window, width=25, height=12)
+
 
 eleve = ""
 
@@ -1100,6 +1149,22 @@ def items_selected_eleve(event):
 para_listebox_eleve.bind('<ButtonRelease-1>', items_selected_eleve)
 
 
+para_listebox_chevaux = tk.Listbox(window, width=25, height=45)
+
+chevaux = []
+cheval = ""
+
+
+def items_selected_cheval(event):
+    global cheval
+    # Indices des éléments sélectionnés
+    selected_indices = para_listebox_chevaux.curselection()
+    cheval = para_listebox_chevaux.get(selected_indices)
+
+
+# Association de la fonction à l'événement de relâchement du bouton de la souris
+para_listebox_chevaux.bind('<ButtonRelease-1>', items_selected_cheval)
+
 # Création d'une liste déroulante pour sélectionner l'heure
 para_listeCombo = ttk.Combobox(window)
 para_listeCombo['values'] = ["mercredi", "samedi"]
@@ -1110,12 +1175,23 @@ parajour = ""
 def action(event):
     global parajour
     global data
+    global chevaux
     parajour = para_listeCombo.get()  # Élément sélectionné dans la liste déroulante
     data = lire_fichier_cavalier(parajour)
+    chevaux = lire_fichier_chevaux()
+    print(chevaux)
     print(data)
+    remplirlisteboxcheval(chevaux)
     para_inserer_listebox(data)
     return data
 
+
+para_input_chevaux = tk.Entry(window)
+para_input_ind_chevaux = tk.Entry(window, width=3)
+para_add_chevaux = tk.Button(
+    window, text="ajouter cheval", command=add_cheval, width=18)
+para_suppr_chevaux = tk.Button(
+    window, text="supprimer cheval", command=suppr_cheval, width=18)
 
 para_listeCombo.bind("<<ComboboxSelected>>", action)
 
