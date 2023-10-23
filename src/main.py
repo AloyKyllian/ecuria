@@ -25,7 +25,9 @@ def heure_precedant():
     Returns:
         Aucun.
     """
-    liste_heure = list(planning.liste_heure)[::-1]
+    # print(planning.liste_eleve)
+    liste_heure = list(planning.liste_eleve)
+    # print(liste_heure)
     for i in range(1, len(liste_heure)):
         if liste_heure[i] == cellule.heure:
             cellule.set_heure(liste_heure[i-1])
@@ -46,7 +48,7 @@ def heure_suivant():
     Returns:
         int: 0 si l'heure suivante est définie avec succès, sinon rien.
     """
-    liste_heure = list(planning.liste_heure)[::-1]
+    liste_heure = list(planning.liste_eleve)
     for i in range(0, len(liste_heure)-1):
         if liste_heure[i] == cellule.heure:
             cellule.set_heure(liste_heure[i+1])
@@ -71,7 +73,7 @@ def ajouter():
     err = planning.ajout(cellule)
     if err == None or err == -4:
         if cellule.ind_eleve != -1:
-            print(cellule.ind_eleve)
+            # print(cellule.ind_eleve)
             colorier_eleve(cellule.ind_eleve)
         ajoutuncheval(cellule.cheval, cellule.ind_cheval)
         affichage_txt(jour, planning)
@@ -263,9 +265,11 @@ def ajouteleve():
     Returns:
         Aucun.
     """
+    # print(planning.liste_eleve)
     vider_listebox(eleve_listbox)
-    for i in planning.liste_eleve[cellule.heure]:
-        inserer_listbox(i)
+    if cellule.heure != 'heure':
+        for i in planning.liste_eleve[cellule.heure]:
+            inserer_listbox(i)
 
 
 def ajoutuncheval(cheval, ind):
@@ -305,7 +309,7 @@ def ajoutcheval():
     cheval_listbox.delete(0, END)
     for i in planning.cheval:
         cheval_listbox.insert(tk.END, (planning.cheval[i][0], i))
-    if cellule.heure != "heure":
+    if cellule.heure != "heure" and cellule.heure in planning.liste_heure:
         colorier()
 
 
@@ -327,6 +331,8 @@ def colorier():
             i, {'bg': 'white'})
     setcheval = set()
     for i in planning.liste_eleve[cellule.heure]:
+        # print(planning.ancien_planning)
+        # print(i)
         ancient = planning.ancient_cheval_de(i, cellule.heure)
         for y in ancient:
             setcheval.add(y[1])
@@ -349,6 +355,8 @@ def colorier_ancient_chevaux(ancient_cheval_eleve):
     Returns:
         Aucun.
     """
+    # print(ancient_cheval_eleve)
+
     if len(ancient_cheval_eleve) >= 3:
         cheval_listbox.itemconfig(
             ancient_cheval_eleve[2][1], {'bg': 'yellow'})
@@ -374,7 +382,6 @@ def changer_heure():
     Returns:
         Aucun.
     """
-    vider_listebox(eleve_listbox)
     ajouteleve()
     colorier()
     varheure.set(f"{cellule.heure}")
@@ -439,20 +446,21 @@ def recupperation_excel(listeself, name):
     dict_heure = {}
     dict_cheval = {}
     Nb = 0
-    for i in range(3, len(sheet["A"])):
+    print(len(sheet["A"]))
+    for i in range(3, len(sheet["A"])+1):
         for j in list(range(1, len(sheet[3])))[::-1]:
-            if sheet.cell(row=i, column=j).value != None:
+            valeur_case = str(sheet.cell(row=i, column=j).value).strip()
+            if valeur_case != 'None':
                 if i == 3:
-                    dict_heure[sheet.cell(
-                        row=i, column=j).value] = j
+                    dict_heure[valeur_case] = j
                 elif j == 1:
-                    dict_cheval[sheet.cell(row=i, column=j).value] = [
+                    dict_cheval[valeur_case] = [
                         Nb, i]
                     Nb = 0
-                elif j > 1 and sheet.cell(row=i, column=j).value != "MERCREDI" and sheet.cell(row=i, column=j).value != "SAMEDI" and sheet.cell(row=3, column=j).value != None and sheet.cell(row=i, column=1).value != None:
+                elif j > 1 and valeur_case != "MERCREDI" and valeur_case != "SAMEDI" and sheet.cell(row=3, column=j).value != None and sheet.cell(row=i, column=1).value != None:
                     Nb += 1
                     liste.append(
-                        (sheet.cell(row=3, column=j).value, sheet.cell(row=i, column=1).value, sheet.cell(row=i, column=j).value))
+                        (sheet.cell(row=3, column=j).value.strip(), sheet.cell(row=i, column=1).value.strip(), valeur_case))
     return liste, dict_cheval, dict_heure
 
 
@@ -470,7 +478,15 @@ def recup_donne():
     Returns:
         Aucun.
     """
+    planning.cheval.clear()
+    planning.liste_heure.clear()
     interface_default()
+    dict_cheval = {}
+    for i in lire_fichier_chevaux():
+        dict_cheval[i[1]] = [0, i[0]+3]
+    planning.set_cheval(dict_cheval)
+    ajoutcheval()
+    print(planning.cheval)
     msgbox = tk.messagebox.showinfo(
         title="Sélection de fichier", message="Veuillez sélectionner le fichier que vous souhaitez remplir")
     chemin = tk.Tk()
@@ -480,13 +496,20 @@ def recup_donne():
         jour.set_mercredi()
     else:
         jour.set_samedi()
-    planning.set_liste_eleve(lire_fichier_cavalier(jour.j))
+    # print(planning.liste_eleve == {})
+    if planning.liste_eleve == {}:
+        planning.set_liste_eleve(lire_fichier_cavalier(jour.j))
     varjour.set(jour.j)
     planning.set_nom_fichier(name)
-    planning.cheval.clear()
-    planning.liste_heure.clear()
+
     dict_planning, cheval, heure = recupperation_excel("", name)
-    planning.set_cheval(cheval)
+    print("laaaaaa", cheval)
+    for i in planning.cheval.keys():
+        if i in cheval:
+            print(i)
+            dict_cheval[i] = cheval[i]
+    print(dict_cheval)
+    planning.set_cheval(dict_cheval)
     planning.set_heure(heure)
     planning.set_planning(dict_planning)
     ajoutcheval()
@@ -576,10 +599,10 @@ def lire_fichiers():
         lignes = lignes.split("\n")
         for ligne in lignes:
             if "H LENA" in ligne or "H30 LENA" in ligne or "H KARINE" in ligne:
-                liste_eleve[ligne] = liste[:]
+                liste_eleve[ligne.strip()] = liste[:]
                 liste.clear()
             else:
-                liste.append(ligne)
+                liste.append(ligne.strip())
         fichier_mer.close()
     elif jour.j == "Samedi":
         fichier_sam = open(path_cavalier_samedi, "r")
@@ -587,10 +610,10 @@ def lire_fichiers():
         lignes = lignes.split("\n")
         for ligne in lignes:
             if "H00" in ligne or "30" in ligne:
-                liste_eleve[ligne] = liste[:]
+                liste_eleve[ligne.strip()] = liste[:]
                 liste.clear()
             else:
-                liste.append(ligne)
+                liste.append(ligne.strip())
         fichier_sam.close()
     return liste_eleve
 
@@ -609,13 +632,43 @@ def ecrire_fichier():
     Returns:
         Aucun.
     """
+    # print(planning.cheval)
+    # print(planning.liste_heure)
+
     workbook = load_workbook(planning.name_fichier)
     sheet = workbook.active
-    for ligne in range(4, len(planning.cheval)+4):
-        for colonne in range(2, len(planning.liste_heure)+2):
+    liste_cheval = list(planning.cheval.keys())
+    data2 = lire_fichier_cavalier(jour.j)
+    cle2 = list(data2.keys())
+    cle2 = sorted(cle2, key=cmp_heure)
+    cle = list(planning.liste_heure.keys())
+    cle = sorted(cle, key=cmp_heure)
+    # effacer excel
+    print("laaa")
+    for ligne in range(3, len(liste_cheval)+4):
+        for colonne in range(1, len(cle2)+2):
             sheet.cell(ligne, colonne).value = None
+            if ligne == 3 and colonne >= 2:
+                sheet.cell(ligne, colonne).value = cle2[colonne-2]
+            elif colonne == 1 and ligne >= 4:
+                sheet.cell(ligne, colonne).value = liste_cheval[ligne-4]
+    print("chevaux", planning.planning)
+    print("liste eleve", planning.liste_eleve)
+    print("liste cheval", planning.cheval)
+    print("liste here", planning.liste_heure)
+    print("liste cle", cle2)
+    dict_heure = {}
+    Nb = 0
+    for i in cle2:
+        dict_heure[i] = Nb+2
+        Nb += 1
+    print(dict_heure)
+    planning.set_heure(dict_heure)
+
     for i in planning.planning:
-        if sheet.cell(planning.cheval[i[1]][1], planning.liste_heure[i[0]]).value == None:
+        print(i)
+        if i[1] in planning.cheval and i[0] in planning.liste_heure:
+            # if sheet.cell(planning.cheval[i[1]][1], planning.liste_heure[i[0]]).value == None:
             sheet.cell(planning.cheval[i[1]][1],
                        planning.liste_heure[i[0]]).value = i[2]
     err = workbook.save(planning.name_fichier)
@@ -631,7 +684,7 @@ def add_heure():
 
 def suppr_heure():
     global data
-    print(data)
+    # print(data)
     del data[heure]
     para_inserer_listebox(data)
     visualiser_fichier_cavalier(data)
@@ -640,7 +693,7 @@ def suppr_heure():
 def add_eleve():
     global data
     global heure
-    data[heure].append(para_input_eleve.get().upper())
+    data[heure].append(para_input_eleve.get().upper().strip())
     remplirlisteboxeleve()
     visualiser_fichier_cavalier(data)
 
@@ -689,9 +742,10 @@ def suppr_eleve():
 
 def para_enregistrer():
     global parajour
-    fichier = open("liste_cavalier_" + parajour + ".txt", "w")
-    fichier.write(ecrire_fichier_cavalier(data))
-    fichier.close()
+    if parajour != '' and data:
+        fichier = open("liste_cavalier_" + parajour + ".txt", "w")
+        fichier.write(ecrire_fichier_cavalier(data))
+        fichier.close()
     fichier = open("liste_cheval.txt", "w")
     fichier.write(ecrire_fichier_cheval(chevaux))
     fichier.close()
@@ -710,6 +764,7 @@ def remplirlisteboxeleve():
 
 
 def interface_default():
+    global parajour
     for widget in widgets_parametre:
         widget.place_forget()
 
@@ -741,6 +796,37 @@ def interface_default():
     historique.place(x=1000, y=70)
     label_historique.place(x=1000, y=40)
     listeCombo.place(x=5, y=3)
+    dict_cheval = {}
+
+    for i in chevaux:
+        if i[1] in planning.cheval:
+            dict_cheval[i[1]] = planning.cheval[i[1]]
+        else:
+            print(i[1])
+            print(planning.nb_heure(i[1]))
+            dict_cheval[i[1]] = [planning.nb_heure(i[1]), i[0]+3]
+
+    planning.set_cheval(dict_cheval)
+
+    if parajour == jour.j:
+        planning.set_heure(data)
+        planning.set_liste_eleve(data)
+    elif jour.j != '':
+        planning.set_liste_eleve(lire_fichier_cavalier(jour.j))
+    else:
+        planning.set_liste_eleve({})
+    if planning.liste_eleve != {}:
+        ajouteleve()
+    if planning.cheval != []:
+        # print("laaaaaaaaaaaaaaaaaaaAAAAAAAAAAAAAAAAAA")
+        ajoutcheval()
+
+    ajout_des_commande_lena()
+
+    print("chevaux", chevaux)
+    print("sata", data)
+    print("liste eleve", planning.liste_eleve)
+    print("liste cheval", planning.cheval)
 
 
 def interface_paramete():
@@ -776,9 +862,9 @@ def lire_fichier_chevaux():
     for ligne in lignes:
         if ligne != '':
             if ligne[2] == '\t':
-                liste.append([int(ligne[:2]), ligne[3:]])
+                liste.append([int(ligne[:2]), ligne[3:].strip()])
             else:
-                liste.append([int(ligne[:2]), ligne[2:]])
+                liste.append([int(ligne[:2]), ligne[2:].strip()])
     return liste
 
 
@@ -794,17 +880,16 @@ def lire_fichier_cavalier(jour):
     for ligne in lignes:
         if ligne != '':
             if "\Fin fichier/" in ligne:
-                print(liste_eleve)
                 return liste_eleve
             if "\heure/" in ligne:
-                liste_eleve[ligne[7:]] = liste[:]
+                liste_eleve[ligne[7:].strip()] = liste[:]
                 liste.clear()
             else:
-                liste.append(ligne)
+                liste.append(ligne.strip())
 
 
 def para_inserer_listebox(data):
-    print(data)
+    # print(data)
     para_listebox_heure.delete(0, END)
     for i in list(data.keys()):
         para_listebox_heure.insert(END, i)
@@ -816,7 +901,7 @@ def mode_parametre():
 
 def mode_default():
     interface_default()
-    lire_fichier_cavalier(jour.j)
+    # lire_fichier_cavalier(jour.j)
 
 
 def visualiser_fichier_cavalier(data):
@@ -833,6 +918,16 @@ def visualiser_fichier_cavalier(data):
 def cmp_heure(d):
     if d[1].isdigit():
         heure = d[:2]
+        if d[3] == '3':
+            heure += '5'
+        else:
+            heure += '0'
+    elif d[1] == 'H':
+        heure = d[0]
+        if d[2] == '3':
+            heure += '5'
+        else:
+            heure += '0'
     else:
         heure = d[0]
     return (int(heure))
@@ -841,9 +936,9 @@ def cmp_heure(d):
 def ecrire_fichier_cavalier(data):
     txt = ""
     cle = list(data.keys())
-    print(cle)
+    # print(cle)
     cle = sorted(cle, key=cmp_heure)
-    print(cle)
+    # print(cle)
     for heure in cle:
         for eleve in data[heure]:
             txt += eleve + "\r"
@@ -981,7 +1076,7 @@ label_cheval3 = tk.Label(
 
 
 # Liste déroulante pour les chevaux
-cheval_listbox = tk.Listbox(window, height=len(planning.cheval))
+cheval_listbox = tk.Listbox(window, height=48)
 
 
 # Fonction appelée lorsqu'un élément est sélectionné dans la liste des chevaux
@@ -1093,7 +1188,8 @@ listeCombo.bind("<<ComboboxSelected>>", action)
 
 def ajout_des_commande_lena():
     listeCombo.delete(0, "end")
-    listeCombo['values'] = list(planning.liste_heure)[::-1]
+    print(planning.liste_eleve)
+    listeCombo['values'] = list(planning.liste_heure)
 
 
 menubar = Menu(window)
@@ -1188,8 +1284,8 @@ def action(event):
     parajour = para_listeCombo.get()  # Élément sélectionné dans la liste déroulante
     data = lire_fichier_cavalier(parajour)
     chevaux = lire_fichier_chevaux()
-    print(chevaux)
-    print(data)
+    # print(chevaux)
+    # print(data)
     remplirlisteboxcheval(chevaux)
     para_inserer_listebox(data)
     return data
@@ -1225,7 +1321,7 @@ para_suppr_enregistrer = tk.Button(
     window, text="enregistrer", command=para_enregistrer)
 
 widgets_parametre.extend(
-    [para_visu_fichier, para_label_historique, para_historique, para_listebox_eleve, para_listebox_heure, para_listeCombo, para_input_heure, para_input_eleve, para_suppr_enregistrer, para_suppr_eleve, para_add_eleve, para_suppr_heure, para_add_heure])
+    [para_visu_fichier, para_label_historique, para_historique, para_listebox_eleve, para_listebox_heure, para_listeCombo, para_input_heure, para_input_eleve, para_suppr_enregistrer, para_suppr_eleve, para_add_eleve, para_suppr_heure, para_add_heure, para_listebox_chevaux, para_input_chevaux, para_add_chevaux, para_suppr_chevaux, para_input_ind_chevaux])
 
 widgets_principaux.extend([label_jour, label_heure, title_label, boutton_avancer_heure, boutton_reculer_heure, label_cavalier, label_cavalier2, label_cavalier3, label_cavalier6, label_cavalier4,
                            label_cavalier5, label_cavalier7, eleve_listbox, label_cheval, label_cheval2, label_cheval3, visu_fichier, cheval_listbox, label_ajout, boutton_ajouter, boutton_supprimer,
