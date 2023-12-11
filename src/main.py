@@ -3,9 +3,11 @@ from Jour import *
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
-from tkinter.filedialog import askopenfilename
-from openpyxl import load_workbook
+from tkinter.filedialog import askopenfilename, askdirectory
+from openpyxl import load_workbook, Workbook
+from openpyxl.styles import Font, Border, Side, Alignment, PatternFill
 import os
+from datetime import datetime, timedelta
 
 path_cavalier_mercredi = "liste_cavalier_mercredi.txt"
 path_cavalier_samedi = "liste_cavalier_samedi.txt"
@@ -54,6 +56,11 @@ def heure_suivant():
             cellule.set_heure(liste_heure[i+1])
             changer_heure()
             return 0
+
+
+def ajouter_rattrapage():
+    planning.liste_eleve[cellule.heure].append(eleve_rattrapage.get().upper())
+    ajouteleve()
 
 
 def ajouter():
@@ -334,8 +341,10 @@ def colorier():
         # print(planning.ancien_planning)
         # print(i)
         ancient = planning.ancient_cheval_de(i, cellule.heure)
+
         for y in ancient:
-            setcheval.add(y[1])
+            if y[1] != "":
+                setcheval.add(y[1])
     for i in setcheval:
         cheval_listbox.itemconfig(
             i, {'bg': 'green'})
@@ -357,13 +366,13 @@ def colorier_ancient_chevaux(ancient_cheval_eleve):
     """
     # print(ancient_cheval_eleve)
 
-    if len(ancient_cheval_eleve) >= 3:
+    if len(ancient_cheval_eleve) >= 3 and ancient_cheval_eleve[2][1] != "":
         cheval_listbox.itemconfig(
             ancient_cheval_eleve[2][1], {'bg': 'yellow'})
-    if len(ancient_cheval_eleve) >= 2:
+    if len(ancient_cheval_eleve) >= 2 and ancient_cheval_eleve[1][1] != "":
         cheval_listbox.itemconfig(
             ancient_cheval_eleve[1][1], {'bg': 'orange'})
-    if len(ancient_cheval_eleve) >= 1:
+    if len(ancient_cheval_eleve) >= 1 and ancient_cheval_eleve[0][1] != "":
         cheval_listbox.itemconfig(
             ancient_cheval_eleve[0][1], {'bg': 'red'})
 
@@ -418,7 +427,11 @@ def cmp_dates(d):
     Returns:
         tuple: Un tuple (année, mois, jour).
     """
+    print(d)
     j, m, a = d[0].split("-")
+    print(j)
+    print(m)
+    print(a)
     return (int(a), int(m), int(j))
 
 
@@ -478,6 +491,9 @@ def recup_donne():
     Returns:
         Aucun.
     """
+    global ancient_nom, cpt_heuresuppr, cpt_chevalsuppr
+    cpt_chevalsuppr = 0
+    cpt_heuresuppr = 0
     planning.cheval.clear()
     planning.liste_heure.clear()
     interface_default()
@@ -521,13 +537,18 @@ def recup_donne():
     path = '/'.join(folder)
     liste = []
     for files in os.listdir(path):
-        if files != name and ".xlsx" in files and '$' not in files:
+        if files != name and ".xlsx" in files and '$' not in files and len(files) > 18:
             if jour.j == "Mercredi" and "mercredi" in files:
                 liste.append((files[15:25], files))
             elif jour.j == "Samedi" and "samedi" in files:
                 liste.append((files[13:23], files))
     liste = sorted(liste, key=cmp_dates, reverse=True)
+    varsemaine1.set(liste[0][1])
+    varsemaine2.set(liste[1][1])
+    varsemaine3.set(liste[2][1])
+    print(liste)
     if len(liste) >= 1:
+        ancient_nom = path + '/' + liste[0][1]
         ancient_planning, x, y = recupperation_excel(
             "ancien", path + '/' + liste[0][1])
         planning.set_ancien_planning(ancient_planning)
@@ -634,24 +655,88 @@ def ecrire_fichier():
     """
     # print(planning.cheval)
     # print(planning.liste_heure)
-
+    global cpt_chevalsuppr, cpt_heuresuppr
     workbook = load_workbook(planning.name_fichier)
     sheet = workbook.active
     liste_cheval = list(planning.cheval.keys())
     data2 = lire_fichier_cavalier(jour.j)
     cle2 = list(data2.keys())
     cle2 = sorted(cle2, key=cmp_heure)
-    cle = list(planning.liste_heure.keys())
-    cle = sorted(cle, key=cmp_heure)
+    dico_numeros = {
+        1: 'A',
+        2: 'B',
+        3: 'C',
+        4: 'D',
+        5: 'E',
+        6: 'F',
+        7: 'G',
+        8: 'H',
+        9: 'I',
+        10: 'J',
+        11: 'K',
+        12: 'L',
+        13: 'M',
+        14: 'N',
+        15: 'O',
+        16: 'P',
+        17: 'Q',
+        18: 'R',
+        19: 'S',
+        20: 'T',
+        21: 'U',
+        22: 'V',
+        23: 'W',
+        24: 'X',
+        25: 'Y',
+        26: 'Z'
+    }
     # effacer excel
-    print("laaa")
-    for ligne in range(3, len(liste_cheval)+4):
-        for colonne in range(1, len(cle2)+2):
+    # print("laaa")
+    # vert ligne = #A9D08E
+    # vert heure = #70AD47
+    # {'thin', 'slantDashDot', 'dotted', 'mediumDashDotDot', 'double', 'medium', 'thick', 'mediumDashed', 'dashed', 'dashDotDot', 'hair', 'mediumDashDot', 'dashDot'}
+    if jour.j == "Mercredi":
+        taillecellule = 88
+    else:
+        taillecellule = 55
+    double = Side(border_style="thin", color="000000")
+    sans = Side(border_style=None, color='FF000000')
+    print(cpt_chevalsuppr)
+    print(cpt_heuresuppr)
+    if cpt_heuresuppr < 0:
+        cpt_heuresuppr = 0
+    if cpt_chevalsuppr < 0:
+        cpt_chevalsuppr = 0
+    for ligne in range(3, len(liste_cheval)+4+cpt_chevalsuppr):
+        for colonne in range(1, len(cle2)+2+cpt_heuresuppr):
+            sheet.cell(ligne, colonne).border = Border(
+                left=sans, top=sans, right=sans, bottom=sans)
             sheet.cell(ligne, colonne).value = None
-            if ligne == 3 and colonne >= 2:
-                sheet.cell(ligne, colonne).value = cle2[colonne-2]
-            elif colonne == 1 and ligne >= 4:
-                sheet.cell(ligne, colonne).value = liste_cheval[ligne-4]
+            sheet.cell(ligne, colonne).fill = PatternFill(
+                start_color='FFFFFFFF', end_color='FF000000', fill_type=None)
+            sheet.cell(ligne, colonne).font = Font(size="48")
+            if colonne-2 < len(cle2) and ligne-4 < len(liste_cheval):
+                sheet.cell(ligne, colonne).border = Border(
+                    left=double, top=double, right=double, bottom=double)
+            sheet.cell(
+                ligne, colonne).alignment = Alignment(horizontal='center', vertical='center')
+            sheet.row_dimensions[ligne].height = 80
+            sheet.column_dimensions[dico_numeros[colonne]
+                                    ].width = taillecellule
+            # sheet.cell(ligne, colonne).width = 55
+            if ligne % 2 == 0 and colonne-2 < len(cle2) and ligne-4 < len(liste_cheval):
+                sheet.cell(ligne, colonne).fill = PatternFill(
+                    start_color='A9D08E', end_color='A9D08E', fill_type='solid')
+            if ligne == 3 and colonne % 2 == 0 and colonne-2 < len(cle2):
+                sheet.cell(ligne, colonne).fill = PatternFill(
+                    start_color='70AD47', end_color='70AD47', fill_type='solid')
+            if ligne == 3 and colonne >= 2 and colonne-2 < len(cle2):
+                sheet.cell(
+                    ligne, colonne).value = cle2[colonne-2]
+                sheet.cell(ligne, colonne).font = Font(size="72")
+            elif colonne == 1 and ligne >= 4 and ligne-4 < len(liste_cheval):
+                sheet.cell(
+                    ligne, colonne).value = liste_cheval[ligne-4]
     print("chevaux", planning.planning)
     print("liste eleve", planning.liste_eleve)
     print("liste cheval", planning.cheval)
@@ -677,17 +762,20 @@ def ecrire_fichier():
 
 
 def add_heure():
+    global cpt_heuresuppr
     data[para_input_heure.get().upper()] = []
     para_inserer_listebox(data)
     visualiser_fichier_cavalier(data)
+    cpt_heuresuppr -= 1
 
 
 def suppr_heure():
-    global data
+    global data, cpt_heuresuppr
     # print(data)
     del data[heure]
     para_inserer_listebox(data)
     visualiser_fichier_cavalier(data)
+    cpt_heuresuppr += 1
 
 
 def add_eleve():
@@ -699,6 +787,7 @@ def add_eleve():
 
 
 def add_cheval():
+    global cpt_chevalsuppr
     present = any(para_input_chevaux.get().upper() == tup[1]
                   for tup in chevaux)
     if not present and len(chevaux)+1 >= int(para_input_ind_chevaux.get()):
@@ -710,9 +799,11 @@ def add_cheval():
                         para_input_chevaux.get().upper()])
         chevaux.sort()
         remplirlisteboxcheval(chevaux)
+        cpt_chevalsuppr -= 1
 
 
 def suppr_cheval():
+    global cpt_chevalsuppr
     if cheval in chevaux:
         chevaux.remove(cheval)
         for che in chevaux:
@@ -720,6 +811,7 @@ def suppr_cheval():
                 che[0] -= 1
         chevaux.sort()
         remplirlisteboxcheval(chevaux)
+        cpt_chevalsuppr += 1
 
 
 def ecrire_fichier_cheval(chevaux):
@@ -773,17 +865,22 @@ def interface_default():
     title_label.place(x=400, y=20)
     boutton_avancer_heure.place(x=150, y=20)
     boutton_reculer_heure.place(x=180, y=20)
-    label_cavalier.place(x=450, y=70)
-    label_cavalier2.place(x=450, y=100)
-    label_cavalier3.place(x=650, y=100)
-    label_cavalier6.place(x=450, y=120)
-    label_cavalier4.place(x=650, y=120)
-    label_cavalier7.place(x=450, y=140)
-    label_cavalier5.place(x=650, y=140)
+    label_cavalier.place(x=400, y=70)
+    label_cavalier2.place(x=400, y=100)
+    label_cavalier3.place(x=600, y=100)
+    label_cavalier6.place(x=400, y=150)
+    label_cavalier4.place(x=600, y=150)
+    label_cavalier7.place(x=400, y=200)
+    label_cavalier5.place(x=600, y=200)
+    boutton_absent.place(x=670, y=100)
+    boutton_correction.place(x=735, y=100)
     eleve_listbox.place(x=20, y=50)
-    label_cheval.place(x=450, y=300)
-    label_cheval2.place(x=450, y=330)
-    label_cheval3.place(x=700, y=330)
+    eleve_rattrapage.place(x=20, y=250)
+    label_eleve_rattrapage.place(x=20, y=230)
+    boutton_eleve_rattrapage.place(x=20, y=270)
+    label_cheval.place(x=400, y=300)
+    label_cheval2.place(x=400, y=330)
+    label_cheval3.place(x=650, y=330)
     cheval_listbox.place(x=200, y=50)
     visu_fichier.place(x=700, y=360)
     label_ajout.place(x=450, y=470)
@@ -796,17 +893,22 @@ def interface_default():
     historique.place(x=1000, y=70)
     label_historique.place(x=1000, y=40)
     listeCombo.place(x=5, y=3)
+
     dict_cheval = {}
 
-    for i in chevaux:
-        if i[1] in planning.cheval:
-            dict_cheval[i[1]] = planning.cheval[i[1]]
-        else:
-            print(i[1])
-            print(planning.nb_heure(i[1]))
-            dict_cheval[i[1]] = [planning.nb_heure(i[1]), i[0]+3]
+    if parajour != "":
+        for i in chevaux:
+            if i[1] in planning.cheval:
+                if i[0] == planning.cheval[i[1]][1]-3:
+                    dict_cheval[i[1]] = planning.cheval[i[1]]
+                else:
+                    dict_cheval[i[1]] = [planning.nb_heure(i[1]), i[0]+3]
+            else:
+                print(i[1])
+                print(planning.nb_heure(i[1]))
+                dict_cheval[i[1]] = [planning.nb_heure(i[1]), i[0]+3]
 
-    planning.set_cheval(dict_cheval)
+        planning.set_cheval(dict_cheval)
 
     if parajour == jour.j:
         planning.set_heure(data)
@@ -947,6 +1049,112 @@ def ecrire_fichier_cavalier(data):
     return txt
 
 
+def prochain_jour(semaine, jour_actuel):
+    jours_de_la_semaine = ["lundi", "mardi", "mercredi",
+                           "jeudi", "vendredi", "samedi", "dimanche"]
+    jour_cible = jours_de_la_semaine.index(semaine)
+
+    jours_jusquau_prochain = (jour_cible - jour_actuel.weekday() + 7) % 7
+    if jours_jusquau_prochain == 0:
+        jours_jusquau_prochain = 7
+
+    return jour_actuel + timedelta(days=jours_jusquau_prochain)
+
+
+def nouveau_fichier():
+    global pop
+    pop = Toplevel(window)
+    pop.title("Creation de excel")
+    pop.geometry("350x150")
+
+    date_actuelle = datetime.now()
+    v = StringVar()
+    date = StringVar()
+
+    # Vérifier si aujourd'hui est déjà un mercredi
+    if date_actuelle.weekday() == 2:  # Le code de semaine pour mercredi est 2 (0 pour lundi, 1 pour mardi, etc.)
+        prochains_mercredis = [date_actuelle]
+        prochain_mercredi = date_actuelle
+    else:
+        # Trouver le prochain mercredi
+        prochain_mercredi = prochain_jour("mercredi", date_actuelle)
+
+        # Ajouter les trois prochains mercredis au tableau
+        prochains_mercredis = [prochain_mercredi]
+    for _ in range(2):
+        prochain_mercredi = prochain_jour("mercredi", prochain_mercredi)
+        prochains_mercredis.append(prochain_mercredi)
+
+    if date_actuelle.weekday() == 5:  # Le code de semaine pour mercredi est 2 (0 pour lundi, 1 pour mardi, etc.)
+        prochains_samedis = [date_actuelle]
+        prochain_samedi = date_actuelle
+    else:
+        # Trouver le prochain mercredi
+        prochain_samedi = prochain_jour("samedi", date_actuelle)
+
+        # Ajouter les trois prochains mercredis au tableau
+        prochains_samedis = [prochain_samedi]
+    for _ in range(2):
+        prochain_samedi = prochain_jour("samedi", prochain_samedi)
+        prochains_samedis.append(prochain_samedi)
+
+    pop_r1_1 = Radiobutton(pop, text=prochains_samedis[0].strftime("%d-%m-%Y"), variable=date,
+                           value=prochains_samedis[0].strftime("%d-%m-%Y"))
+    pop_r1_2 = Radiobutton(pop, text=prochains_samedis[1].strftime("%d-%m-%Y"), variable=date,
+                           value=prochains_samedis[1].strftime("%d-%m-%Y"))
+    pop_r1_3 = Radiobutton(pop, text=prochains_samedis[2].strftime("%d-%m-%Y"), variable=date,
+                           value=prochains_samedis[2].strftime("%d-%m-%Y"))
+
+    pop_r2_1 = Radiobutton(pop, text=prochains_mercredis[0].strftime("%d-%m-%Y"), variable=date,
+                           value=prochains_mercredis[0].strftime("%d-%m-%Y"))
+    pop_r2_2 = Radiobutton(pop, text=prochains_mercredis[1].strftime("%d-%m-%Y"), variable=date,
+                           value=prochains_mercredis[1].strftime("%d-%m-%Y"))
+    pop_r2_3 = Radiobutton(pop, text=prochains_mercredis[2].strftime("%d-%m-%Y"), variable=date,
+                           value=prochains_mercredis[2].strftime("%d-%m-%Y"))
+
+    def affichejoursam():
+        pop_r2_1.place_forget()
+        pop_r2_2.place_forget()
+        pop_r2_3.place_forget()
+
+        pop_r1_1.place(y=40, x=80)
+        pop_r1_2.place(y=60, x=80)
+        pop_r1_3.place(y=80, x=80)
+
+    def affichejoursmer():
+        pop_r1_1.place_forget()
+        pop_r1_2.place_forget()
+        pop_r1_3.place_forget()
+        # Vérifier si aujourd'hui est déjà un mercredi
+
+        pop_r2_1.place(y=40, x=80)
+        pop_r2_2.place(y=60, x=80)
+        pop_r2_3.place(y=80, x=80)
+
+    pop_label = Label(
+        pop, text="voulez vous creer un fichier Mercredi ou Samedi")
+    pop_label.place(x=40, y=20)
+
+    v.set("Mercredi")  # initialiser
+    pop_r1 = Radiobutton(pop, text="Mercredi", variable=v,
+                         value="Mercredi", command=affichejoursmer)
+    pop_r1.place(x=10, y=40)
+    pop_r2 = Radiobutton(pop, text="Samedi", variable=v,
+                         value="Samedi", command=affichejoursam)
+    pop_r2.place(x=10, y=60)
+
+    def choix_date():
+        pop.destroy()
+        workbook = Workbook()
+        name = askdirectory()
+        print(name + '/liste ' + v.get() + ' ' + date.get() + '.xlsx')
+        workbook.save(name + '/liste ' + v.get() + ' ' + date.get() + '.xlsx')
+
+        recup_donne()
+    pop_valider = Button(pop, text="Valider", command=choix_date)
+    pop_valider.place(x=300, y=120)
+
+
 # Importation des modules
 cellule = Cellule()  # Création d'une instance de la classe Cellule
 planning = Planning()  # Création d'une instance de la classe Planning
@@ -963,6 +1171,9 @@ widgets_principaux = []
 
 widgets_parametre = []
 
+ancient_nom = ""
+
+
 # Création d'un cadre dans la fenêtre
 frame = tk.Frame(master=window, width=300, height=100)
 frame.pack()
@@ -976,6 +1187,9 @@ varajout = StringVar()
 varheure_cheval = StringVar()
 varcavalier1 = StringVar()
 varcavalier2 = StringVar()
+varsemaine1 = StringVar()
+varsemaine2 = StringVar()
+varsemaine3 = StringVar()
 
 label_jour = tk.Label(window, textvariable=varjour)
 
@@ -997,22 +1211,66 @@ boutton_reculer_heure = tk.Button(
 label_cavalier = tk.Label(window, text="INFOS cavalier")
 
 label_cavalier2 = tk.Label(
-    window, text="la semaine dernière il/elle a monté : ")
+    window, textvariable=varsemaine1)
 
 label_cavalier3 = tk.Label(
     window, textvariable=varcavalier)
 
 label_cavalier6 = tk.Label(
-    window, text="il y a 2 semaines il/elle a monté : ")
+    window, textvariable=varsemaine2)
 
 label_cavalier4 = tk.Label(
     window, textvariable=varcavalier1)
 
 label_cavalier7 = tk.Label(
-    window, text="il y a 3 semaines il/elle a monté : ")
+    window, textvariable=varsemaine3)
 label_cavalier5 = tk.Label(
     window, textvariable=varcavalier2)
 
+
+def correction():
+    workbook = load_workbook(ancient_nom)
+    sheet = workbook.active
+    print(planning.liste_heure[cellule.heure])
+    print(dernier_cheval)
+    for ind in range(1, len(sheet["A"])+1):
+        print(sheet.cell(ind, 1).value)
+        if sheet.cell(ind, 1).value == cellule.cheval:
+            sheet.cell(ind,
+                       planning.liste_heure[cellule.heure]).value = cellule.eleve
+        if sheet.cell(ind, 1).value == dernier_cheval:
+            print(sheet.cell(ind,
+                             planning.liste_heure[cellule.heure]).value)
+            sheet.cell(ind,
+                       planning.liste_heure[cellule.heure]).value = None
+    err = workbook.save(ancient_nom)
+    if err == None:
+        varcavalier.set(cellule.cheval)
+
+
+def absent():
+    workbook = load_workbook(ancient_nom)
+    sheet = workbook.active
+    print(planning.liste_heure[cellule.heure])
+    print(dernier_cheval)
+    for ind in range(1, len(sheet["A"])+1):
+        print(sheet.cell(ind, 1).value)
+        if sheet.cell(ind, 1).value == dernier_cheval:
+            print(sheet.cell(ind,
+                             planning.liste_heure[cellule.heure]).value)
+            sheet.cell(ind,
+                       planning.liste_heure[cellule.heure]).value = None
+    err = workbook.save(ancient_nom)
+    if err == None:
+        varcavalier.set("cheval")
+
+
+dernier_cheval = ""
+
+boutton_absent = tk.Button(
+    window, height=1, width=4, text="ABS", command=absent)
+boutton_correction = tk.Button(
+    window, height=1, text="correction", command=correction)
 # Initialisation des variables de contrôle
 varcavalier.set("cheval")
 varcavalier1.set("cheval1")
@@ -1021,19 +1279,29 @@ varcavalier2.set("cheval2")
 # Liste déroulante pour les élèves
 eleve_listbox = tk.Listbox(window, yscrollcommand=True)
 
+eleve_rattrapage = tk.Entry(window)
+
+label_eleve_rattrapage = tk.Label(window, text="rattrapage")
+
+boutton_eleve_rattrapage = tk.Button(
+    window, text="rattrapage", command=ajouter_rattrapage)
+
 # Fonction appelée lorsqu'un élément est sélectionné dans la liste des élèves
 
 
 def items_selected(event):
+    global dernier_cheval
     # Indices des éléments sélectionnés
     selected_indices = eleve_listbox.curselection()
     cellule.set_eleve(eleve_listbox.get(
         selected_indices), selected_indices[0])
     ancient_cheval = planning.ancient_cheval_de(
         cellule.eleve, cellule.heure)
+    print(ancient_cheval)
     # Mise à jour des étiquettes des chevaux associés
-    if len(ancient_cheval) >= 1:
+    if ancient_cheval[0][1] != "":
         varcavalier.set(ancient_cheval[0][0])
+        dernier_cheval = ancient_cheval[0][0]
     else:
         varcavalier.set("cheval")
     if len(ancient_cheval) >= 2:
@@ -1189,7 +1457,7 @@ listeCombo.bind("<<ComboboxSelected>>", action)
 def ajout_des_commande_lena():
     listeCombo.delete(0, "end")
     print(planning.liste_eleve)
-    listeCombo['values'] = list(planning.liste_heure)
+    listeCombo['values'] = list(planning.liste_eleve)
 
 
 menubar = Menu(window)
@@ -1201,6 +1469,7 @@ sousmenu.add_command(label="principal", command=mode_default)
 
 
 # Ajout des éléments au menu
+menubar.add_command(label="Nouveau", command=nouveau_fichier)
 menubar.add_command(label="Jour", command=recup_donne)
 menubar.add_cascade(label="Mode", menu=sousmenu)
 menubar.add_command(label="Quitter!", command=window.quit)
@@ -1325,7 +1594,7 @@ widgets_parametre.extend(
 
 widgets_principaux.extend([label_jour, label_heure, title_label, boutton_avancer_heure, boutton_reculer_heure, label_cavalier, label_cavalier2, label_cavalier3, label_cavalier6, label_cavalier4,
                            label_cavalier5, label_cavalier7, eleve_listbox, label_cheval, label_cheval2, label_cheval3, visu_fichier, cheval_listbox, label_ajout, boutton_ajouter, boutton_supprimer,
-                           boutton_enregistrer, label_enregistrer, label_heure_cheval, heure_listebox, label_historique, historique, listeCombo])
+                           boutton_enregistrer, label_enregistrer, label_heure_cheval, heure_listebox, label_historique, historique, listeCombo, boutton_absent, boutton_correction, eleve_rattrapage, label_eleve_rattrapage, boutton_eleve_rattrapage])
 
 # Lancement de la boucle principale de l'application
 window.mainloop()

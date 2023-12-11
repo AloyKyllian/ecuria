@@ -383,14 +383,20 @@ class Planning():
         """
         cavalier = []
         for i in self.ancien_planning:
-            if (i[2], i[0]) == (personne, heure):
+            if (i[2].upper(), i[0].upper()) == (personne.upper(), heure.upper()) and i[1] in self.cheval:
                 cavalier.append((i[1], self.cheval[i[1]][1]-4))
+        if len(cavalier) == 0:
+            cavalier.append(("cheval", ""))
         for i in self.ancien_planning2:
-            if (i[2], i[0]) == (personne, heure):
+            if (i[2].upper(), i[0].upper()) == (personne.upper(), heure.upper()) and i[1] in self.cheval:
                 cavalier.append((i[1], self.cheval[i[1]][1]-4))
+        if len(cavalier) == 1:
+            cavalier.append(("cheval1", ""))
         for i in self.ancien_planning3:
-            if (i[2], i[0]) == (personne, heure):
+            if (i[2].upper(), i[0].upper()) == (personne.upper(), heure.upper()) and i[1] in self.cheval:
                 cavalier.append((i[1], self.cheval[i[1]][1]-4))
+        if len(cavalier) == 2:
+            cavalier.append(("cheval2", ""))
         return cavalier
 
     def ancient_eleve_de(self, cheval):
