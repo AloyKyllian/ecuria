@@ -321,7 +321,7 @@ class Planning():
         heure = 0
         a = 0
         txt = ""
-        txt = (f"\t\t\t\t\t\tPlanning {jour}")
+        txt = (f"\tPlanning {jour}")
         for i in self.planning:
             if heure != i[0]:
                 heure = i[0]
