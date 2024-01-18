@@ -9,10 +9,35 @@ from openpyxl.styles import Font, Border, Side, Alignment, PatternFill
 import os
 from datetime import datetime, timedelta
 from PIL import Image, ImageTk
+from ftplib import FTP
+import subprocess
+from io import BytesIO
+import openpyxl
 
+
+adresse_serveur = "83.113.54.154"
+nom_utilisateur = "lena"
+mot_de_passe = "1234"
 
 path_cavalier_mercredi = "liste_cavalier_mercredi.txt"
 path_cavalier_samedi = "liste_cavalier_samedi.txt"
+
+
+def telecharger_fichier_ftp(ftp, fichier_distant, fichier_local):
+    ftp = FTP(adresse_serveur)
+    ftp.login(user=nom_utilisateur, passwd=mot_de_passe)
+    wb = load_workbook(fichier_local)
+
+    # Créez un fichier en mémoire pour stocker le contenu du fichier Excel
+    excel_content = BytesIO()
+    wb.save(excel_content)
+
+    # Téléversez le fichier Excel en mémoire sur le serveur FTP
+    excel_content.seek(0)  # Revenir au début du fichier en mémoire
+    ftp.storbinary('STOR ' + fichier_local, excel_content)
+    print(
+        f"Le fichier {fichier_distant} a été téléchargé avec succès depuis le serveur FTP.")
+    ftp.close()
 
 
 def heure_precedant():
@@ -277,8 +302,9 @@ def ajouteleve():
 
     vider_listebox(eleve_listbox)
     if cellule.heure != 'heure':
-        for i in planning.liste_eleve[cellule.heure]:
-            inserer_listbox(i)
+        if cellule.heure in planning.liste_eleve:
+            for i in planning.liste_eleve[cellule.heure]:
+                inserer_listbox(i)
 
 
 def ajoutuncheval(cheval, ind):
@@ -474,6 +500,46 @@ def recupperation_excel(listeself, name):
     return liste, dict_cheval, dict_heure
 
 
+def download_files_from_ftp():
+    ftp = FTP(adresse_serveur)
+    ftp.login(user=nom_utilisateur, passwd=mot_de_passe)
+    files = ftp.nlst()
+
+    samedi_files = []
+
+    mercredi_files = []
+
+    for file in files:
+        if "samedi" in file.lower():
+            samedi_files.append((file, extract_date_from_filename(file)))
+        elif "mercredi" in file.lower():
+            mercredi_files.append((file, extract_date_from_filename(file)))
+
+    samedi_files = sort_files_by_date(samedi_files)
+    mercredi_files = sort_files_by_date(mercredi_files)
+
+    samedi_file_names = [file[0] for file in samedi_files]
+    mercredi_file_names = [file[0] for file in mercredi_files]
+
+    print("samedi_file_names:", samedi_file_names)
+    print("mercredi_file_names:", mercredi_file_names)
+    ftp.close()
+    return samedi_file_names, mercredi_file_names
+
+
+def sort_files_by_date(files):
+    # Trie les fichiers par date (les plus récents en premier)
+    sorted_files = sorted(files, key=lambda x: x[1], reverse=True)
+    return sorted_files
+
+
+def extract_date_from_filename(filename):
+    # Extrait la date du nom du fichier
+    date_str = filename.split()[-1].split('.')[0]
+    file_date = datetime.strptime(date_str, "%d-%m-%Y")
+    return file_date
+
+
 def recup_donne():
     """
     Récupère les données depuis un fichier Excel et initialise le planning.
@@ -488,7 +554,6 @@ def recup_donne():
     Returns:
         Aucun.
     """
-
     global ancient_nom, cpt_heuresuppr, cpt_chevalsuppr
     cpt_chevalsuppr = 0
     cpt_heuresuppr = 0
@@ -555,15 +620,17 @@ def recup_donne():
         planning.set_ancien_planning3(ancient_planning3)
     msgbox = tk.messagebox.showinfo(
         title="Création de fichier", message="Tous les fichiers ont été récupérés")
-    ajout_des_commande_lena()
+    remplir_listecombo_heure()
+    print(planning.planning)
 
 
-def recup_donne_mercredi():
+def recup_donne2(name):
     """
-    Définit le jour comme "Mercredi" et récupère les données depuis un fichier Excel.
+    Récupère les données depuis un fichier Excel et initialise le planning.
 
-    Cette fonction met le jour comme "Mercredi" en utilisant la méthode "setmercredi" de l'objet "jour"
-    puis appelle la fonction "recup_donne" pour récupérer les données depuis un fichier Excel.
+    Cette fonction affiche une boîte de dialogue pour sélectionner un fichier Excel, puis utilise la
+    fonction "recupperation_excel" pour extraire les données du fichier, les initialise dans l'objet
+    "planning" et met à jour l'affichage.
 
     Args:
         Aucun.
@@ -571,65 +638,63 @@ def recup_donne_mercredi():
     Returns:
         Aucun.
     """
-    jour.set_mercredi()
-    recup_donne()
+    global ancient_nom, cpt_heuresuppr, cpt_chevalsuppr, ancient_nom2, ancient_nom3
+    cpt_chevalsuppr = 0
+    cpt_heuresuppr = 0
+    planning.cheval.clear()
+    planning.liste_heure.clear()
+    interface_default()
+    dict_cheval = {}
+    for i in lire_fichier_chevaux():
+        dict_cheval[i[1]] = [0, i[0]+3]
+    planning.set_cheval(dict_cheval)
 
+    if "mercredi" in name[0].lower():
+        jour.set_mercredi()
+    else:
+        jour.set_samedi()
+    planning.set_liste_eleve(lire_fichier_cavalier(jour.j))
+    varjour.set(jour.j)
+    planning.set_nom_fichier(name[0])
 
-def recup_donne_samedi():
-    """
-    Définit le jour comme "Samedi" et récupère les données depuis un fichier Excel.
+    dict_planning, cheval, heure = recupperation_excel("", name[0])
+    for i in planning.cheval.keys():
+        if i in cheval:
+            dict_cheval[i] = cheval[i]
 
-    Cette fonction met le jour comme "Samedi" en utilisant la méthode "setsamedi" de l'objet "jour"
-    puis appelle la fonction "recup_donne" pour récupérer les données depuis un fichier Excel.
+    planning.set_cheval(dict_cheval)
+    planning.set_heure(heure)
+    planning.set_planning(dict_planning)
+    ajoutcheval()
+    visu_fichier.delete('1.0', END)
+    visu_fichier.insert(END, planning.fichier(jour.j))
 
-    Args:
-        Aucun.
+    liste = name
 
-    Returns:
-        Aucun.
-    """
-    jour.set_samedi()
-    recup_donne()
+    if len(liste) > 1:
+        varsemaine1.set(name[1].replace(".xlsx", ""))
+        ancient_nom = name[1]
+        ancient_planning, x, y = recupperation_excel(
+            "ancien", name[1])
+        planning.set_ancien_planning(ancient_planning)
+    if len(liste) > 2:
 
-
-def lire_fichiers():
-    """
-    Lit les fichiers correspondant au jour en cours et organise les données.
-
-    Cette fonction lit les fichiers correspondant au jour en cours (Mercredi ou Samedi), organise les
-    données des cavaliers et renvoie un dictionnaire avec les cavaliers et leurs listes d'élèves associées.
-
-    Args:
-        Aucun.
-
-    Returns:
-        dict: Un dictionnaire avec les noms des cavaliers en tant que clés et les listes d'élèves en tant que valeurs.
-    """
-    liste = []
-    liste_eleve = {}
-    if jour.j == "Mercredi":
-        fichier_mer = open(path_cavalier_mercredi, "r")
-        lignes = fichier_mer.read()
-        lignes = lignes.split("\n")
-        for ligne in lignes:
-            if "H LENA" in ligne or "H30 LENA" in ligne or "H KARINE" in ligne:
-                liste_eleve[ligne.strip()] = liste[:]
-                liste.clear()
-            else:
-                liste.append(ligne.strip())
-        fichier_mer.close()
-    elif jour.j == "Samedi":
-        fichier_sam = open(path_cavalier_samedi, "r")
-        lignes = fichier_sam.read()
-        lignes = lignes.split("\n")
-        for ligne in lignes:
-            if "H00" in ligne or "30" in ligne:
-                liste_eleve[ligne.strip()] = liste[:]
-                liste.clear()
-            else:
-                liste.append(ligne.strip())
-        fichier_sam.close()
-    return liste_eleve
+        varsemaine2.set(name[2].replace(".xlsx", ""))
+        ancient_nom2 = name[2]
+        ancient_planning2, x, y = recupperation_excel(
+            "ancien2", name[2])
+        planning.set_ancien_planning2(ancient_planning2)
+    if len(liste) > 3:
+        ancient_nom3 = name[3]
+        varsemaine3.set(ancient_nom3.replace(".xlsx", ""))
+        ancient_planning3, x, y = recupperation_excel(
+            "ancien3", name[3])
+        planning.set_ancien_planning3(ancient_planning3)
+    msgbox = tk.messagebox.showinfo(
+        title="Création de fichier", message="Tous les fichiers ont été récupérés")
+    remplir_listecombo_heure()
+    # print(planning.planning)
+    # print(planning.liste_eleve)
 
 
 def ecrire_fichier():
@@ -739,12 +804,12 @@ def ecrire_fichier():
 
     for i in planning.planning:
         if i[1] in planning.cheval and i[0] in planning.liste_heure:
-            # if sheet.cell(planning.cheval[i[1]][1], planning.liste_heure[i[0]]).value == None:
             sheet.cell(planning.cheval[i[1]][1],
                        planning.liste_heure[i[0]]).value = i[2]
     err = workbook.save(planning.name_fichier)
     if err == None:
         label_enregistrer.config(fg="#ffffff")
+        upload_les_excel()
 
 
 def add_heure():
@@ -881,6 +946,8 @@ def interface_default():
     image1.place(x=535, y=606)
     image2.place(x=70, y=606)
     image3.place(x=680, y=220)
+    bouton_ouvrir_excel.place(x=1400, y=60)
+    bouton_rafraichir.place(x=1400, y=100)
 
     dict_cheval = {}
 
@@ -910,7 +977,7 @@ def interface_default():
 
         ajoutcheval()
 
-    ajout_des_commande_lena()
+    remplir_listecombo_heure()
 
 
 def interface_paramete():
@@ -1171,11 +1238,22 @@ def nouveau_fichier():
     def choix_date():
         pop.destroy()
         workbook = Workbook()
-        name = askdirectory()
-        workbook.save(name + '/liste ' + v.get() +
-                      ' ' + date.get() + '.xlsx')
+        name = 'liste ' + v.get() + ' ' + date.get() + '.xlsx'
+        workbook.save(name)
+        telecharger_fichier_ftp(ftp, name, name)
+        samedi_file_names, mercredi_file_names = download_files_from_ftp()
+        if v.get() == "samedi":
+            files = samedi_file_names
+            menu = file_menu
+        if v.get() == "mercredi":
+            files = mercredi_file_names
+            menu = edit_menu
+        menu.delete(0, tk.END)
+        for i, file_name in enumerate(files[:5]):
+            menu.add_command(
+                label=file_name, command=lambda file_name=file_name:  download_selected_and_recent_files(v.get(), name))
 
-        recup_donne()
+        download_selected_and_recent_files(v.get(), name)
     pop_valider = Button(pop, text="Valider", command=choix_date)
     pop_valider.place(x=300, y=120)
 
@@ -1194,17 +1272,42 @@ def image(root, image_path, width, height):
     return image_label
 
 
+def ecrire_dans_fichier(tableau_tuples, nom_fichier='donnees.txt'):
+    with open(nom_fichier, 'w') as fichier:
+        for ligne in tableau_tuples:
+            fichier.write(','.join(ligne) + '\n')
+
+
+def lire_depuis_fichier(nom_fichier='donnees.txt'):
+    tableau_tuples = []
+    with open(nom_fichier, 'r') as fichier:
+        lignes = fichier.readlines()
+        for ligne in lignes:
+            heure, cheval, personne = ligne.strip().split(',')
+            tableau_tuples.append((heure, cheval, personne))
+    return tableau_tuples
+
+
 # Importation des modules
 cellule = Cellule()  # Création d'une instance de la classe Cellule
 planning = Planning()  # Création d'une instance de la classe Planning
 jour = Jour()  # Création d'une instance de la classe Jour
 
+
+ftp = FTP(adresse_serveur)
+err = ftp.login(user=nom_utilisateur, passwd=mot_de_passe)
+# Liste des fichiers présents sur le serveur
+# fichiers_sur_serveur = ftp.nlst()
+
+# print(fichiers_sur_serveur)
+if err == "230-Welcome to TrueNAS FTP Server\n230 User lena logged in":
+    samedi_file_names, mercredi_file_names = download_files_from_ftp()
 # Création de l'interface utilisateur
 window = tk.Tk()  # Création de la fenêtre principale
 window.title("Planning")  # Titre de la fenêtre
 window.attributes('-fullscreen', True)  # Affichage en mode plein écran
 # Permet de quitter en appuyant sur la touche "Échap"
-window.bind('<Escape>', lambda e: window.destroy())
+window.bind('<Escape>', lambda e: quitter())
 window_width = window.winfo_width()
 window_height = window.winfo_height()
 
@@ -1222,6 +1325,8 @@ widgets_principaux = []
 widgets_parametre = []
 
 ancient_nom = ""
+ancient_nom2 = ""
+ancient_nom3 = ""
 
 image_label = add_centered_image(
     window, "0f382f680a13445c8e6484ecbbe2a2b5-transformed.png", 169*4, 166*4)
@@ -1468,6 +1573,26 @@ label_heure_cheval = tk.Label(
 heure_listebox = tk.Listbox(window, width=25, height=5)
 
 
+def ouvrir_excel():
+    subprocess.Popen(['start', 'excel', planning.name_fichier], shell=True)
+
+
+def rafraichir():
+    dict_planning, cheval, heure = recupperation_excel(
+        "", planning.name_fichier)
+    planning.set_planning(dict_planning)
+    planning.set_cheval(cheval)
+    planning.set_heure(heure)
+    ajoutcheval()
+    affichage_txt(jour, planning)
+
+
+bouton_ouvrir_excel = tk.Button(
+    window, text="ouvrir", bg="#8abd45", command=ouvrir_excel)
+
+bouton_rafraichir = tk.Button(
+    window, text="rafraichir", bg="#8abd45", command=rafraichir)
+
 # Fonction appelée lorsqu'un élément est sélectionné dans la liste des heures de travail
 
 
@@ -1516,9 +1641,8 @@ def action(event):
 listeCombo.bind("<<ComboboxSelected>>", action)
 
 
-def ajout_des_commande_lena():
+def remplir_listecombo_heure():
     listeCombo.delete(0, "end")
-
     listeCombo['values'] = list(planning.liste_eleve)
 
 
@@ -1530,11 +1654,82 @@ sousmenu.add_command(label="parametre", command=mode_parametre)
 sousmenu.add_command(label="principal", command=mode_default)
 
 
+def download_files(ftp, files):
+    ftp.login(user=nom_utilisateur, passwd=mot_de_passe)
+    for file in files:
+        with open(f"{file}", "wb") as local_file:
+            ftp.retrbinary(f"RETR {file}", local_file.write)
+    ftp.close()
+
+
+def download_selected_and_recent_files(day, selected_file):
+    ftp = FTP(adresse_serveur)
+    ftp.login(user=nom_utilisateur, passwd=mot_de_passe)
+    samedi_file_names, mercredi_file_names = download_files_from_ftp()
+    suppr_excel()
+    print(selected_file)
+    if day.lower() == "samedi":
+        files = samedi_file_names
+    elif day.lower() == "mercredi":
+        files = mercredi_file_names
+    # Récupère les trois fichiers les plus récents du même jour
+    for i in range(len(files)):
+        if files[i] == selected_file:
+            selected_ind = i
+
+    # Upload des fichiers
+    download_files(ftp, files[selected_ind:selected_ind+4])
+    ftp.close()
+
+    recup_donne2(files[selected_ind:selected_ind+4])
+
+
 # Ajout des éléments au menu
 menubar.add_command(label="Nouveau", command=nouveau_fichier)
-menubar.add_command(label="Jour", command=recup_donne)
+file_menu = tk.Menu(menubar, tearoff=0)
+menubar.add_cascade(label="Samedi", menu=file_menu)
+
+for i, file_name in enumerate(samedi_file_names[:5]):
+    file_menu.add_command(
+        label=file_name, command=lambda file_name=file_name:  download_selected_and_recent_files(
+            "Samedi", file_name))
+
+edit_menu = tk.Menu(menubar, tearoff=0)
+menubar.add_cascade(label="Mercredi", menu=edit_menu)
+
+for i, file_name in enumerate(mercredi_file_names[:5]):
+    edit_menu.add_command(
+        label=file_name, command=lambda file_name=file_name:  download_selected_and_recent_files("Mercredi", file_name))
+
+
+def upload_les_excel():
+    if planning.name_fichier:
+        telecharger_fichier_ftp(
+            ftp, planning.name_fichier, planning.name_fichier)
+    if ancient_nom:
+        telecharger_fichier_ftp(ftp, ancient_nom, ancient_nom)
+
+
+def quitter():
+    upload_les_excel()
+    suppr_excel()
+    window.quit()
+
+
+def suppr_excel():
+    if planning.name_fichier:
+        os.remove(planning.name_fichier)
+    if ancient_nom:
+        os.remove(ancient_nom)
+    if ancient_nom2:
+        os.remove(ancient_nom2)
+    if ancient_nom3:
+        os.remove(ancient_nom3)
+
+
+# menubar.add_command(label="Jour", command=recup_donne)
 menubar.add_cascade(label="Mode", menu=sousmenu)
-menubar.add_command(label="Quitter!", command=window.quit)
+menubar.add_command(label="Quitter!", command=quitter)
 
 # Affichage du menu dans la fenêtre
 window.config(menu=menubar)
@@ -1656,7 +1851,7 @@ widgets_parametre.extend(
 
 widgets_principaux.extend([label_jour, label_heure, title_label, boutton_avancer_heure, boutton_reculer_heure, label_cavalier, label_cavalier2, label_cavalier3, label_cavalier6, label_cavalier4,
                            label_cavalier5, label_cavalier7, eleve_listbox, cheval_listbox, label_ajout, boutton_ajouter, boutton_supprimer, visu_fichier, label_visu_fichier,
-                           boutton_enregistrer, label_enregistrer, image1, image2, label_heure_cheval, heure_listebox, label_historique, historique, listeCombo, boutton_absent, boutton_correction, eleve_rattrapage, label_eleve_rattrapage, boutton_eleve_rattrapage])
+                           boutton_enregistrer, bouton_rafraichir, bouton_ouvrir_excel, label_enregistrer, image1, image2, label_heure_cheval, heure_listebox, label_historique, historique, listeCombo, boutton_absent, boutton_correction, eleve_rattrapage, label_eleve_rattrapage, boutton_eleve_rattrapage])
 
 # Lancement de la boucle principale de l'application
 window.mainloop()
