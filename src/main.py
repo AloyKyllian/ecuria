@@ -73,9 +73,9 @@ def ajouter_rattrapage():
     planning.liste_eleve[cellule.heure].append(eleve_rattrapage.get().upper())
     ajouteleve()
     
-def unesessionmoins():
+def unesessionmoins(eleve):
     for i in range(len(planning.liste_eleve[cellule.heure])):
-        if planning.liste_eleve[cellule.heure][i][0] == cellule.eleve:
+        if planning.liste_eleve[cellule.heure][i][0] == eleve:
             print(cellule.eleve)
             planning.liste_eleve[cellule.heure][i][1] -= 1
             if planning.liste_eleve[cellule.heure][i][1] == 0:
@@ -83,10 +83,11 @@ def unesessionmoins():
             break
     ajouteleve()
     
-def unesessionplus():
+def unesessionplus(eleve):
     for i in range(len(planning.liste_eleve[cellule.heure])):
-        if planning.liste_eleve[cellule.heure][i][0] == cellule.eleve:
-            print(cellule.eleve)
+        print(cellule.heure,i)
+        if planning.liste_eleve[cellule.heure][i][0] == eleve:
+            print("ici", eleve)
             planning.liste_eleve[cellule.heure][i][1] += 1
             if planning.liste_eleve[cellule.heure][i][1] > 10:
                 planning.liste_eleve[cellule.heure][i][1] = 1
@@ -108,15 +109,11 @@ def ajouter():
     Returns:
         Aucun.
     """
-    elevecarte = False
-    if isinstance(cellule.eleve[1], int):
-        cellule.eleve = cellule.eleve[0]
-        elevecarte = True  
     err = planning.ajout(cellule)
     if err == None or err == -4:
         if elevecarte == True:
-            unesessionmoins()
-        print(planning.liste_eleve)
+            unesessionmoins(cellule.eleve)
+        # print(planning.liste_eleve)
         if cellule.ind_eleve != -1:
             colorier_eleve(cellule.ind_eleve)
         ajoutuncheval(cellule.cheval, cellule.ind_cheval)
@@ -152,16 +149,11 @@ def supprimer():
     Returns:
         Aucun.
     """
-    elevecarte = False
-    if isinstance(cellule.eleve[1], int):
-        cellule.eleve = cellule.eleve[0]
-        elevecarte = True
     err = planning.supprime(cellule)
     if err == None:
         if elevecarte == True:
-            unesessionplus()
+            unesessionplus(cellule.eleve)
         if cellule.ind_eleve != -1:
-
             decolorier_eleve(cellule.ind_eleve)
         ajoutuncheval(cellule.cheval, cellule.ind_cheval)
         affichage_txt(jour, planning)
@@ -727,6 +719,7 @@ def ecrire_fichier():
     err = workbook.save(planning.name_fichier)
     if err == None:
         label_enregistrer.config(fg="#ffffff")
+        sauvegarder_liste_eleve()
         upload_les_excel()
 
 
@@ -1317,12 +1310,8 @@ label_cavalier5 = tk.Label(
 def correction():
     workbook = load_workbook(ancient_nom)
     sheet = workbook.active
-    print(varcavalier.get())
-    print(cellule.eleve[1])
-    if cellule.eleve[1] != -1 and varcavalier.get() == "cheval":
-        unesessionplus()
-    if len(cellule.eleve) == 2:
-        cellule.eleve = cellule.eleve[0]
+    if elevecarte == True and varcavalier.get() == "cheval":
+        unesessionmoins(cellule.eleve)
 
 
     for ind in range(1, len(sheet["A"])+1):
@@ -1341,8 +1330,8 @@ def correction():
 def absent():
     workbook = load_workbook(ancient_nom)
     sheet = workbook.active
-    if cellule.eleve[1] != -1:
-        unesessionplus()
+    if elevecarte == True:
+        unesessionplus(cellule.eleve)
     for ind in range(1, len(sheet["A"])+1):
 
         if sheet.cell(ind, 1).value == dernier_cheval:
@@ -1382,19 +1371,19 @@ boutton_eleve_rattrapage = tk.Button(
 
 
 def items_selected(event):
-    global dernier_cheval
+    global dernier_cheval,elevecarte
     # Indices des éléments sélectionnés
     selected_indices = eleve_listbox.curselection()
     eleve = eleve_listbox.get(selected_indices)
 
     cellule.set_eleve(eleve, selected_indices[0])
+    elevecarte = False
     if isinstance(cellule.eleve[1], int):
-        eleve = cellule.eleve[0]
-    elif isinstance(cellule.eleve[1], str):
-        eleve = cellule.eleve
+        cellule.eleve = cellule.eleve[0]
+        elevecarte = True
         
     ancient_cheval = planning.ancient_cheval_de(
-            eleve, cellule.heure)
+            cellule.eleve, cellule.heure)
 
     # Mise à jour des étiquettes des chevaux associés
     if ancient_cheval[0][1] != "":
@@ -1620,6 +1609,22 @@ def upload_les_excel():
         fichier.append(ancient_nom)
     ftp.telecharger_fichier_ftp(fichier)
 
+def sauvegarder_liste_eleve():
+    fichier = open("liste_cavalier_" + jour.j + ".txt", "w")
+    
+    txt = ""
+    cle = list(planning.liste_eleve.keys())
+    cle = sorted(cle, key=cmp_heure)
+
+    for heure in cle:
+        for eleve in planning.liste_eleve[heure]:
+            txt += eleve[0]+"/"+ str(eleve[1]) + "\r"
+        txt += "\\heure/" + heure + "\r"
+    txt += "\\Fin fichier/"
+    
+    fichier.write(txt)
+    fichier.close()
+    
 
 def quitter():
     upload_les_excel()
