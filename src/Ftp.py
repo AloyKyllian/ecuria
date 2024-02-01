@@ -11,8 +11,12 @@ class Ftp():
         self.adresse_serveur = adresse_serveur
         self.nom_utilisateur = nom_utilisateur
         self.mot_de_passe = mot_de_passe
-        self.ftp=FTP(self.adresse_serveur)
-        # return download_files_from_ftp()
+        try:
+            self.ftp=FTP(self.adresse_serveur)
+        except:
+            return -1
+        # if self.ftp=FTP(self.adresse_serveur) != ""
+        #     return -1
 
     # adresse_serveur = "83.113.54.154"
     # nom_utilisateur = "lena"
