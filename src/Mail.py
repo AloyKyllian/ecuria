@@ -41,7 +41,7 @@ def envoyer_email(user, piece_jointe,nom_piece_jointe,sujeti,mail):
     # Envoi de l'e-mail
     try:
         err = serveur_smtp.sendmail('ecuria.excel@gmail.com', destinataire, msg.as_string())
-        print("E-mail envoyé avec succès !")
+        print("E-mail envoyé avec succès !",err)
     except:
         err = "Erreur lors de l'envoie de l'email (veuiller verifier l'adresse du destinataire :"+destinataire+")"
     # Fermeture de la connexion au serveur SMTP

@@ -70,7 +70,7 @@ def ecrire_excel_ref(jour):
     hauteur = feuille.row_dimensions[4].height
     taille_police = feuille.cell(4, 2).font.size
 
-    print(largeur,hauteur)
+    print(largeur,hauteur,jour)
     
     sheet = workbook.active
     liste_cheval = list(planning.cheval.keys())
@@ -116,6 +116,8 @@ def ecrire_excel_ref(jour):
 
     marge = 0
     for ligne in range(3, len(liste_cheval)+4+marge):
+        print(ligne)
+        sheet.row_dimensions[ligne].height = hauteurcellule
         for colonne in range(1, len(cle2)+2+marge):
             sheet.cell(ligne, colonne).border = Border(
                 left=sans, top=sans, right=sans, bottom=sans)
@@ -128,7 +130,7 @@ def ecrire_excel_ref(jour):
                     left=double, top=double, right=double, bottom=double)
             sheet.cell(
                 ligne, colonne).alignment = Alignment(horizontal='center', vertical='center')
-            sheet.row_dimensions[ligne].height = hauteurcellule
+            
             sheet.column_dimensions[dico_numeros[colonne]
                                     ].width = taillecellule
             # sheet.cell(ligne, colonne).width = 55
@@ -145,6 +147,8 @@ def ecrire_excel_ref(jour):
             elif colonne == 1 and ligne >= 4 and ligne-4 < len(liste_cheval):
                 sheet.cell(
                     ligne, colonne).value = liste_cheval[ligne-4]
+    sheet.cell(len(liste_cheval)+4, 1).value = "theme"
+    sheet.cell(len(liste_cheval)+4, 1).font = Font(size=taille_police)
                 
     workbook.save(path_parametre+jour+'.xlsx')
 
@@ -199,7 +203,8 @@ def ajouter_rattrapage():
     
 def ecrire_word():
     theme_t = [planning_theme,planning_theme1,planning_theme2,planning_theme3]
-    word(jour.j, nom_fichier, planning,theme_t,user)
+    eleves = lire_fichier_cavalier(jour.j)
+    word(jour.j, nom_fichier, planning,theme_t,user,eleves)
 
 def ajouter_theme():
     global planning_theme
@@ -690,17 +695,7 @@ def recup_donne():
     """
 
     global ancient_nom,nom_fichier,planning_theme,planning_theme1,planning_theme2,planning_theme3
-    planning_theme={}
-    planning_theme1={}
-    planning_theme2={}
-    planning_theme3={}
-    planning.cheval.clear()
-    planning.liste_heure.clear()
-    dict_cheval = {}
-    for i in lire_fichier_chevaux():
-        dict_cheval[i[1]] = [0, i[0]+3]
-    planning.set_cheval(dict_cheval)
-    # ajoutcheval()
+    interface_default()
     msgbox = tk.messagebox.showinfo(
         title="Sélection de fichier", message="Veuillez sélectionner le fichier que vous souhaitez remplir")
     chemin = tk.Tk()
@@ -714,13 +709,26 @@ def recup_donne():
         msgbox = tk.messagebox.showerror(
             title="Erreur de fichier", message="Le fichier n'est pas un fichier de planning")
         return
+    planning_theme={}
+    planning_theme1={}
+    planning_theme2={}
+    planning_theme3={}
+    planning.cheval.clear()
+    planning.liste_heure.clear()
+    
+    dict_cheval = {}
+    for i in lire_fichier_chevaux():
+        dict_cheval[i[1]] = [0, i[0]+3]
+    planning.set_cheval(dict_cheval)
+    # ajoutcheval()
+
     
     planning.set_liste_eleve(lire_fichier_cavalier(jour.j))
     varjour.set(jour.j)
     nom_fichier=[]
     planning.set_nom_fichier(path)
 
-    dict_planning, cheval, heure,planning_theme = recupperation_excel( path)
+    dict_planning, cheval, heure,planning_theme = recupperation_excel(path)
     for i in planning.cheval.keys():
         if i in cheval:
             #mise a jour des valeur des chevaux
@@ -768,7 +776,7 @@ def recup_donne():
         nom_fichier.append(liste[2])
         ancient_planning3, x, y,planning_theme3 = recupperation_excel(path +liste[2])
         planning.set_ancien_planning3(ancient_planning3)
-    interface_default()
+    
     msgbox = tk.messagebox.showinfo(
         title="Création de fichier", message="Tous les fichiers ont été récupérés")
     ajout_des_commande_lena()
@@ -897,8 +905,10 @@ def ecrire_fichier():
     err = workbook.save(planning.name_fichier)
     if err == None:
         label_enregistrer.config(fg="#ffffff")
+        cavalier = lire_fichier_cavalier(jour.j)
+        # print(cavalier)
         fichier = open(path_parametre+"liste_cavalier_" + jour.j + ".txt", "w")
-        fichier.write(ecrire_fichier_cavalier())
+        fichier.write(ecrire_fichier_cavalier(cavalier,carte=True))
         fichier.close()
 
 
@@ -1187,7 +1197,6 @@ def lire_fichier_cavalier(jour):
 
 
 def para_inserer_listebox(data):
-
     para_listebox_heure.delete(0, END)
     for i in list(data.keys()):
         para_listebox_heure.insert(END, i)
@@ -1233,7 +1242,7 @@ def cmp_heure(d):
     return (int(heure))
 
 
-def ecrire_fichier_cavalier(data={}):
+def ecrire_fichier_cavalier(data={},carte =False):
     txt = ""
     if data == {}:
         cle = list(planning.liste_eleve.keys())
@@ -1242,11 +1251,17 @@ def ecrire_fichier_cavalier(data={}):
         cle = list(data.keys())
         eleves = data
     cle = sorted(cle, key=cmp_heure)
-    print(eleves)
+    # print(eleves)
     
     for heure in cle:
+        ind=0
         for eleve in eleves[heure]:
-            txt += eleve[0]+"/"+ str(eleve[1]) + "\r"
+            if carte and eleve[1] != -1:
+                # print(planning.liste_eleve[heure][ind][0],planning.liste_eleve[heure][ind][1] )
+                txt += planning.liste_eleve[heure][ind][0]+"/"+ str(planning.liste_eleve[heure][ind][1]) + "\r"
+            else:
+                txt += eleve[0]+"/"+ str(eleve[1]) + "\r"
+            ind+=1
         txt += "\\heure/" + heure + "\r"
     txt += "\\Fin fichier/"
     return txt
@@ -1408,17 +1423,33 @@ def image(root, image_path, width, height):
     image_label.image = photo
     return image_label
 
-
+def mettre_a_jour():
+    global mail,data,chevaux
+    if parajour != '':
+        data = lire_fichier_cavalier(parajour)
+        chevaux = lire_fichier_chevaux()
+        remplirlisteboxcheval(chevaux)
+        para_inserer_listebox(data)
+    mail = get_mail()
+    if len(mail) > 0:
+        para_entry_karine.delete(0, END)
+        para_entry_karine.insert(0, mail[0])
+    if len(mail) > 1:
+        para_entry_lena.delete(0, END)
+        para_entry_lena.insert(0, mail[1])
+    
 
 def importer_param():
     chemin = askopenfilename()
     dezipper(chemin, path_parametre)
+    mettre_a_jour()
+    
     
 def exporter_param():
     nom_zip = 'parametre.zip'
     chemin = zip_fichiers(path_parametre, nom_zip)
     err =envoyer_email("Lena", chemin,nom_zip,"exportation des parametres",mail)
-    if err != None:
+    if err != {}:
         msgbox = tk.messagebox.showerror(
         title="envoie des parametre par mail", message=err)
 
@@ -1428,7 +1459,7 @@ cellule = Cellule()  # Création d'une instance de la classe Cellule
 planning = Planning()  # Création d'une instance de la classe Planning
 jour = Jour()  # Création d'une instance de la classe Jour
 
-version = 1.6  # Version actuelle du programme
+version = 1.7  # Version actuelle du programme
 user = get_personne()
 print(user)
 mail = get_mail()
@@ -1440,15 +1471,7 @@ window.attributes('-fullscreen', True)  # Affichage en mode plein écran
 # Permet de quitter en appuyant sur la touche "Échap"
 window.bind('<Escape>', lambda e: window.destroy())
 
-
-
-# window.wm_attributes('-alpha', 0)
-# window.wm_attributes('-transparentcolor', '#f0f0f0')
-
-
-# window.configure(bg='#b4b4b4')
 set_background(window, "image_fond.png")
-
 
 widgets_principaux = []
 
@@ -1776,7 +1799,7 @@ def ouvrir_excel():
 
 def ecrire_mail():
     err = envoyer_email(user,planning.name_fichier,nom_fichier[0],"envoie du planning du "+str(extract_date_from_filename(planning.name_fichier))[0:11],mail)
-    if err != None:
+    if err != {}:
         msgbox = tk.messagebox.showerror(
         title="envoie des parametre par mail", message=err)
 

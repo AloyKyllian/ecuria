@@ -6,19 +6,19 @@ from Planning import *
 from tkinter.filedialog import askdirectory
 from docx.shared import RGBColor
 
-def word(jour,nom,planning,theme_t,user):
+def word(jour,nom,planning,theme_t,user,liste_eleves):
     if user == "Lena":
         lettre = "L"
     elif user == "Karine":
         lettre = "K"
     planning_t = [planning.planning,planning.ancien_planning,planning.ancien_planning2,planning.ancien_planning3] 
-
     path = askdirectory()
     print(nom)
     nom=nom[::-1]
     planning_t = planning_t[::-1]
     theme_t = theme_t[::-1]
     for heure in planning.liste_eleve:
+        liste_cavalier = [eleve for [eleve,nb] in liste_eleves[heure]]
         if lettre.lower() in heure.lower():
             nomfichier = nom[len(nom)-1].lower().replace('liste samedi','').replace('.xlsx','').replace('liste mercredi','')+'_'+heure+'.docx'
             liste_eleve = set()
@@ -45,13 +45,13 @@ def word(jour,nom,planning,theme_t,user):
                 table.cell(0, i+1).text = date
             eleves = {}
             
-
+            ind_rattrapage = []
             # Adding names of students in the first column
             for i, eleve in enumerate(liste_eleve):
                 eleves[eleve] = i+1
                 table.cell(i+1, 0).text = eleve
-                print(eleve,planning.liste_eleve[heure])
-                if eleve not in planning.liste_eleve[heure]:
+                if eleve not in liste_cavalier:
+                    ind_rattrapage.append(i+1)
                     paragraphe = table.cell(i+1, 0).paragraphs[0]
                     paragraphe.text = eleve
                     paragraphe.runs[0].font.color.rgb = RGBColor(255, 0, 0)
@@ -66,6 +66,11 @@ def word(jour,nom,planning,theme_t,user):
                     if cellule[0] == heure and cellule[2] in eleves:
                         # print(cellule)
                         table.cell(eleves[cellule[2]], i+1).text = cellule[1]
+                        # print(eleves[cellule[2]],ind_rattrapage)
+                        if eleves[cellule[2]] in ind_rattrapage:
+                            paragraphe = table.cell(eleves[cellule[2]], i+1).paragraphs[0]
+                            paragraphe.text = cellule[1]
+                            paragraphe.runs[0].font.color.rgb = RGBColor(255, 0, 0)
                         ind+=1
             table.cell(len(liste_eleve)+1, 0).text = 'theme'
             
