@@ -17,6 +17,11 @@ class Ftp():
     # adresse_serveur = "83.113.54.154"
     # nom_utilisateur = "lena"
     # mot_de_passe = "1234"
+    def liste_fichiers(self):
+        self.connexion()
+        fichiers = self.ftp.nlst()
+        self.deconnexion()
+        return fichiers
 
     def connexion(self):
         print("connexion")
@@ -31,6 +36,13 @@ class Ftp():
     def deconnexion(self):
         print("deconnexion")
         self.ftp.close()
+
+    def telecharger_fichier_zip(self, fichier_zip):
+        self.connexion()
+        print("telecharger_fichier_zip")
+        with open(fichier_zip, "wb") as local_file:
+            self.ftp.retrbinary(f"RETR {fichier_zip}", local_file.write)
+        self.deconnexion()
 
     def telecharger_fichier_ftp(self, fichier):
         self.connexion()

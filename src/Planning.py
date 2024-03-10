@@ -322,6 +322,7 @@ class Planning():
         a = 0
         txt = ""
         txt = (f"\tPlanning {jour}")
+        self.planning.sort()
         for i in self.planning:
             if heure != i[0]:
                 heure = i[0]

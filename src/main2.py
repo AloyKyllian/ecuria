@@ -1,6 +1,10 @@
 from Planning import *
-from Ftp import *
 from Jour import *
+from Word import *
+from Mail import *
+from Zip import *
+from Maj import *
+from Ftp import *
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
@@ -9,20 +13,140 @@ from openpyxl import load_workbook, Workbook
 from openpyxl.styles import Font, Border, Side, Alignment, PatternFill
 import os
 from datetime import datetime, timedelta
-from PIL import Image,ImageTk
-from PIL.ImageTk import PhotoImage
-from ftplib import FTP
+from PIL import Image, ImageTk
 import subprocess
-from io import BytesIO
-import openpyxl
+import shutil
+
+path_parametre = "parametre/"
+path_cavalier_mercredi =path_parametre+ "liste_cavalier_mercredi.txt"
+path_cavalier_samedi =path_parametre+ "liste_cavalier_samedi.txt"
+path_cheval =path_parametre+ "liste_cheval.txt"
+path_mail =path_parametre+ "mail.txt"
+path_user = "user.txt"
+path_Mercredi =path_parametre+ "Mercredi.xlsx"
+path_Samedi =path_parametre+ "Samedi.xlsx"
 
 
-adresse_serveur = "83.113.54.154"
-nom_utilisateur = "lena"
-mot_de_passe = "1234"
+def get_personne():
+    with open(path_user, "r") as file:
+        return file.read()
 
-path_cavalier_mercredi = "liste_cavalier_mercredi.txt"
-path_cavalier_samedi = "liste_cavalier_samedi.txt"
+def get_mail():
+    with open(path_mail, 'r') as file:
+        lines = file.readlines()
+        tableau = [line.strip() for line in lines]
+    print(tableau)
+    return tableau
+    
+def unesessionmoins(eleve,heure):
+    for i in range(len(planning.liste_eleve[heure])):
+        if planning.liste_eleve[heure][i][0] == eleve:
+            planning.liste_eleve[heure][i][1] -= 1
+            if planning.liste_eleve[heure][i][1] == 0:
+                planning.liste_eleve[heure][i][1] = 10
+            break
+    ajouteleve()
+    
+def unesessionplus(eleve,heure):
+    for i in range(len(planning.liste_eleve[heure])):
+        if planning.liste_eleve[heure][i][0] == eleve:
+            planning.liste_eleve[heure][i][1] += 1
+            if planning.liste_eleve[heure][i][1] > 10:
+                planning.liste_eleve[heure][i][1] = 1
+            break
+    ajouteleve()
+
+def ecrire_excel_ref(jour):
+    global planning_theme
+    
+    workbook = load_workbook(path_parametre+jour+'.xlsx')
+
+    # Accéder à la feuille de calcul souhaitée
+    feuille = workbook.active
+
+    # Parcourir les lignes et les colonnes de la feuille de calcul
+
+    largeur = feuille.column_dimensions['B'].width
+    hauteur = feuille.row_dimensions[4].height
+    taille_police = feuille.cell(4, 2).font.size
+
+    print(largeur,hauteur)
+    
+    sheet = workbook.active
+    liste_cheval = list(planning.cheval.keys())
+    data2 = lire_fichier_cavalier(jour)
+    cle2 = list(data2.keys())
+    cle2 = sorted(cle2, key=cmp_heure)
+    dico_numeros = {
+        1: 'A',
+        2: 'B',
+        3: 'C',
+        4: 'D',
+        5: 'E',
+        6: 'F',
+        7: 'G',
+        8: 'H',
+        9: 'I',
+        10: 'J',
+        11: 'K',
+        12: 'L',
+        13: 'M',
+        14: 'N',
+        15: 'O',
+        16: 'P',
+        17: 'Q',
+        18: 'R',
+        19: 'S',
+        20: 'T',
+        21: 'U',
+        22: 'V',
+        23: 'W',
+        24: 'X',
+        25: 'Y',
+        26: 'Z'
+    }
+    # effacer excel
+    # vert ligne = #A9D08E
+    # vert heure = #70AD47
+    # {'thin', 'slantDashDot', 'dotted', 'mediumDashDotDot', 'double', 'medium', 'thick', 'mediumDashed', 'dashed', 'dashDotDot', 'hair', 'mediumDashDot', 'dashDot'}
+    taillecellule = largeur
+    hauteurcellule = hauteur
+    double = Side(border_style="thin", color="000000")
+    sans = Side(border_style=None, color='FF000000')
+
+    marge = 0
+    for ligne in range(3, len(liste_cheval)+4+marge):
+        for colonne in range(1, len(cle2)+2+marge):
+            sheet.cell(ligne, colonne).border = Border(
+                left=sans, top=sans, right=sans, bottom=sans)
+            sheet.cell(ligne, colonne).value = None
+            sheet.cell(ligne, colonne).fill = PatternFill(
+                start_color='FFFFFFFF', end_color='FF000000', fill_type=None)
+            sheet.cell(ligne, colonne).font = Font(size=taille_police)
+            if colonne-2 < len(cle2) and ligne-4 < len(liste_cheval):
+                sheet.cell(ligne, colonne).border = Border(
+                    left=double, top=double, right=double, bottom=double)
+            sheet.cell(
+                ligne, colonne).alignment = Alignment(horizontal='center', vertical='center')
+            sheet.row_dimensions[ligne].height = hauteurcellule
+            sheet.column_dimensions[dico_numeros[colonne]
+                                    ].width = taillecellule
+            # sheet.cell(ligne, colonne).width = 55
+            if ligne % 2 == 0 and colonne-2 < len(cle2) and ligne-4 < len(liste_cheval):
+                sheet.cell(ligne, colonne).fill = PatternFill(
+                    start_color='A9D08E', end_color='A9D08E', fill_type='solid')
+            if ligne == 3 and colonne % 2 == 0 and colonne-2 < len(cle2):
+                sheet.cell(ligne, colonne).fill = PatternFill(
+                    start_color='70AD47', end_color='70AD47', fill_type='solid')
+            if ligne == 3 and colonne >= 2 and colonne-2 < len(cle2):
+                sheet.cell(
+                    ligne, colonne).value = cle2[colonne-2]
+                sheet.cell(ligne, colonne).font = Font(size=taille_police)
+            elif colonne == 1 and ligne >= 4 and ligne-4 < len(liste_cheval):
+                sheet.cell(
+                    ligne, colonne).value = liste_cheval[ligne-4]
+                
+    workbook.save(path_parametre+jour+'.xlsx')
 
 def heure_precedant():
     """
@@ -70,30 +194,17 @@ def heure_suivant():
 
 
 def ajouter_rattrapage():
-    planning.liste_eleve[cellule.heure].append(eleve_rattrapage.get().upper())
+    planning.liste_eleve[cellule.heure].append((eleve_rattrapage.get().upper(),-1))
     ajouteleve()
     
-def unesessionmoins(eleve):
-    for i in range(len(planning.liste_eleve[cellule.heure])):
-        if planning.liste_eleve[cellule.heure][i][0] == eleve:
-            print(cellule.eleve)
-            planning.liste_eleve[cellule.heure][i][1] -= 1
-            if planning.liste_eleve[cellule.heure][i][1] == 0:
-                planning.liste_eleve[cellule.heure][i][1] = 10
-            break
-    ajouteleve()
-    
-def unesessionplus(eleve):
-    for i in range(len(planning.liste_eleve[cellule.heure])):
-        print(cellule.heure,i)
-        if planning.liste_eleve[cellule.heure][i][0] == eleve:
-            print("ici", eleve)
-            planning.liste_eleve[cellule.heure][i][1] += 1
-            if planning.liste_eleve[cellule.heure][i][1] > 10:
-                planning.liste_eleve[cellule.heure][i][1] = 1
-            break
-    ajouteleve()
+def ecrire_word():
+    theme_t = [planning_theme,planning_theme1,planning_theme2,planning_theme3]
+    word(jour.j, nom_fichier, planning,theme_t,user)
 
+def ajouter_theme():
+    global planning_theme
+    theme.set(theme_entry.get())
+    planning_theme[cellule.heure] = theme.get()
 
 def ajouter():
     """
@@ -112,13 +223,13 @@ def ajouter():
     err = planning.ajout(cellule)
     if err == None or err == -4:
         if elevecarte == True:
-            unesessionmoins(cellule.eleve)
-        # print(planning.liste_eleve)
+            unesessionmoins(cellule.eleve,cellule.heure)
         if cellule.ind_eleve != -1:
             colorier_eleve(cellule.ind_eleve)
         ajoutuncheval(cellule.cheval, cellule.ind_cheval)
         affichage_txt(jour, planning)
         label_enregistrer.config(fg="#b4b4b4")
+        colorier_chevaux()
         inserer_liste_de_travaille()
         ajout_historique(
             "ajout", (cellule.heure, cellule.cheval, cellule.eleve))
@@ -152,12 +263,13 @@ def supprimer():
     err = planning.supprime(cellule)
     if err == None:
         if elevecarte == True:
-            unesessionplus(cellule.eleve)
+            unesessionplus(cellule.eleve,cellule.heure)
         if cellule.ind_eleve != -1:
             decolorier_eleve(cellule.ind_eleve)
         ajoutuncheval(cellule.cheval, cellule.ind_cheval)
         affichage_txt(jour, planning)
         label_enregistrer.config(fg="#b4b4b4")
+        colorier_chevaux()
         inserer_liste_de_travaille()
         ajout_historique("suppression", (cellule.heure,
                          cellule.cheval, cellule.eleve))
@@ -233,10 +345,12 @@ def ajout_historique(type, element):
     Returns:
         Aucun.
     """
+    historique.config(state='normal')
     planning.append_historique(type, element)
     historique.delete('1.0', END)
     for i in planning.historique:
         historique.insert("1.0", f"{i}\r\n")
+    historique.config(state='disabled')
 
 
 def affichage_txt(jour, planning):
@@ -253,8 +367,10 @@ def affichage_txt(jour, planning):
     Returns:
         Aucun.
     """
+    visu_fichier.config(state='normal')
     visu_fichier.delete('1.0', END)
     visu_fichier.insert(END, planning.fichier(jour.j))
+    visu_fichier.config(state='disabled')
 
 
 def vider_listebox(listebox):
@@ -319,9 +435,8 @@ def ajouteleve():
 
     vider_listebox(eleve_listbox)
     if cellule.heure != 'heure':
-        if cellule.heure in planning.liste_eleve:
-            for i in planning.liste_eleve[cellule.heure]:
-                inserer_listbox(i)
+        for i in planning.liste_eleve[cellule.heure]:
+            inserer_listbox(i)
 
 
 def ajoutuncheval(cheval, ind):
@@ -383,7 +498,6 @@ def colorier():
             i, {'bg': 'white'})
     setcheval = set()
     for i in planning.liste_eleve[cellule.heure]:
-        print(i)
         if len(i)==2:
             ancient = planning.ancient_cheval_de(i[0], cellule.heure)
         else:
@@ -421,6 +535,11 @@ def colorier_ancient_chevaux(ancient_cheval_eleve):
         cheval_listbox.itemconfig(
             ancient_cheval_eleve[0][1], {'bg': 'red'})
 
+def colorier_chevaux():
+    for cell in planning.planning:
+        if cell[0][0:2] in cellule.heure and cell[1] in planning.cheval:
+            cheval_listbox.itemconfig(planning.cheval[cell[1]][1]-4, {'bg': 'violet'})
+
 
 def changer_heure():
     """
@@ -438,8 +557,26 @@ def changer_heure():
     """
     ajouteleve()
     colorier()
+    colorier_chevaux()
     varheure.set(f"{cellule.heure}")
     varajout.set(cellule.getCellule())
+    if cellule.heure in planning_theme:
+        theme.set(planning_theme[cellule.heure])
+    else:
+        theme.set("theme")
+    if cellule.heure in planning_theme1:
+        theme1.set(planning_theme1[cellule.heure])
+    else:
+        theme1.set("theme1")
+    if cellule.heure in planning_theme2:
+        theme2.set(planning_theme2[cellule.heure])
+    else:
+        theme2.set("theme2")
+    if cellule.heure in planning_theme3:
+        theme3.set(planning_theme3[cellule.heure])
+    else:
+        theme3.set("theme3")
+
 
 
 def changement_heure(i):
@@ -478,7 +615,7 @@ def cmp_dates(d):
     return (int(a), int(m), int(j))
 
 
-def recupperation_excel(listeself, name):
+def recupperation_excel(name):
     """
     Récupère les données depuis un fichier Excel et les organise en listes et dictionnaires.
 
@@ -499,42 +636,45 @@ def recupperation_excel(listeself, name):
     workbook = load_workbook(name)
     sheet = workbook.active
     liste = []
+    planning_theme = {}
     dict_heure = {}
     dict_cheval = {}
+    heure_temp = {}
     Nb = 0
+    print(len(sheet["A"]))
     for i in range(3, len(sheet["A"])+1):
+        print(i,str(sheet.cell(row=i, column=1).value).strip())
         for j in list(range(1, len(sheet[3])+1))[::-1]:
             valeur_case = str(sheet.cell(row=i, column=j).value).strip()
+            
             if valeur_case != 'None':
                 if i == 3:
                     dict_heure[valeur_case] = j
+                    heure_temp[j] = valeur_case
                 elif j == 1:
-                    dict_cheval[valeur_case] = [
-                        Nb, i]
+                    dict_cheval[valeur_case] = [Nb,i]
                     Nb = 0
-                elif j > 1 and valeur_case != "MERCREDI" and valeur_case != "SAMEDI" and sheet.cell(row=3, column=j).value != None and sheet.cell(row=i, column=1).value != None:
+                elif j > 1 and valeur_case != "MERCREDI" and valeur_case != "SAMEDI" and sheet.cell(row=3, column=j).value != None and sheet.cell(row=i, column=1).value != None and str(sheet.cell(row=i, column=1).value).strip() != "theme":
                     Nb += 1
                     liste.append(
                         (sheet.cell(row=3, column=j).value.strip(), sheet.cell(row=i, column=1).value.strip(), valeur_case))
-    # print("liste : ", liste, "dict_cheval :",dict_cheval,"dict_heure :",dict_heure)
-    return liste, dict_cheval, dict_heure
-
-
+                elif j>1 and str(sheet.cell(row=i, column=1).value).strip() == "theme" :
+                    planning_theme[heure_temp[j].upper()] = valeur_case
+                    print(i,j,heure_temp[j],valeur_case)
+    return liste, dict_cheval, dict_heure,planning_theme
 
 def sort_files_by_date(files):
-    # Trie les fichiers par date (les plus récents en premier)
-    sorted_files = sorted(files, key=lambda x: x[1], reverse=True)
-    return sorted_files
-
+        # Trie les fichiers par date (les plus récents en premier)
+        sorted_files = sorted(files, key=lambda x: x[1], reverse=True)
+        return sorted_files
 
 def extract_date_from_filename(filename):
     # Extrait la date du nom du fichier
     date_str = filename.split()[-1].split('.')[0]
     file_date = datetime.strptime(date_str, "%d-%m-%Y")
     return file_date
-
-
-def recup_donne2(name):
+    
+def recup_donne():
     """
     Récupère les données depuis un fichier Excel et initialise le planning.
 
@@ -548,111 +688,90 @@ def recup_donne2(name):
     Returns:
         Aucun.
     """
-    global ancient_nom, cpt_heuresuppr, cpt_chevalsuppr, ancient_nom2, ancient_nom3
-    cpt_chevalsuppr = 0
-    cpt_heuresuppr = 0
+
+    global ancient_nom,nom_fichier,planning_theme,planning_theme1,planning_theme2,planning_theme3
+    planning_theme={}
+    planning_theme1={}
+    planning_theme2={}
+    planning_theme3={}
     planning.cheval.clear()
     planning.liste_heure.clear()
-    interface_default()
     dict_cheval = {}
     for i in lire_fichier_chevaux():
         dict_cheval[i[1]] = [0, i[0]+3]
     planning.set_cheval(dict_cheval)
-
-    if "mercredi" in name[0].lower():
+    # ajoutcheval()
+    msgbox = tk.messagebox.showinfo(
+        title="Sélection de fichier", message="Veuillez sélectionner le fichier que vous souhaitez remplir")
+    chemin = tk.Tk()
+    chemin.withdraw()                 # pour ne pas afficher la fenêtre Tk
+    path = askopenfilename()
+    if "mercredi" in path.lower():
         jour.set_mercredi()
-    else:
+    elif "samedi" in path.lower():
         jour.set_samedi()
+    else :
+        msgbox = tk.messagebox.showerror(
+            title="Erreur de fichier", message="Le fichier n'est pas un fichier de planning")
+        return
+    
     planning.set_liste_eleve(lire_fichier_cavalier(jour.j))
     varjour.set(jour.j)
-    planning.set_nom_fichier(name[0])
+    nom_fichier=[]
+    planning.set_nom_fichier(path)
 
-    dict_planning, cheval, heure = recupperation_excel("", name[0])
+    dict_planning, cheval, heure,planning_theme = recupperation_excel( path)
     for i in planning.cheval.keys():
         if i in cheval:
-            dict_cheval[i] = cheval[i]
-
+            #mise a jour des valeur des chevaux
+            dict_cheval[i][0] = cheval[i][0]
+            
     planning.set_cheval(dict_cheval)
     planning.set_heure(heure)
     planning.set_planning(dict_planning)
     ajoutcheval()
-    visu_fichier.delete('1.0', END)
-    visu_fichier.insert(END, planning.fichier(jour.j))
+    affichage_txt(jour, planning)
 
-    liste = name
-
-    if len(liste) > 1:
-        varsemaine1.set(name[1].replace(".xlsx", ""))
-        ancient_nom = name[1]
-        ancient_planning, x, y = recupperation_excel(
-            "ancien", name[1])
+    
+    
+    folder = path.split('/')
+    name = folder[-1]
+    nom_fichier.append(name)
+    liste = []
+    path = path.replace(name, "")
+    files = []
+    for file in os.listdir(path):
+        if jour.j.lower() in file.lower() and "~$" not in file.lower() and ".xlsx" in file.lower():
+            files.append((file, extract_date_from_filename(file)))
+    liste = sort_files_by_date(files)
+    for i in range(len(liste)):
+            if liste[i][0] == name:
+                selected_ind = i
+    nb_fichier=4
+    if i-selected_ind < 3:
+        nb_fichier = i-selected_ind
+    liste = [item[0] for item in liste[selected_ind+1:selected_ind+nb_fichier]]
+    
+    if len(liste) > 0:
+        varsemaine1.set(liste[0].replace(".xlsx", ""))
+        ancient_nom = path + liste[0]
+        nom_fichier.append(liste[0])
+        ancient_planning, x, y,planning_theme1 = recupperation_excel( path + liste[0])
         planning.set_ancien_planning(ancient_planning)
-    if len(liste) > 2:
-
-        varsemaine2.set(name[2].replace(".xlsx", ""))
-        ancient_nom2 = name[2]
-        ancient_planning2, x, y = recupperation_excel(
-            "ancien2", name[2])
+    if len(liste) > 1:
+        varsemaine2.set(liste[1].replace(".xlsx", ""))
+        nom_fichier.append(liste[1])
+        ancient_planning2, x, y,planning_theme2 = recupperation_excel( path +liste[1])
         planning.set_ancien_planning2(ancient_planning2)
-    if len(liste) > 3:
-        ancient_nom3 = name[3]
-        varsemaine3.set(ancient_nom3.replace(".xlsx", ""))
-        ancient_planning3, x, y = recupperation_excel(
-            "ancien3", name[3])
+    if len(liste) > 2:
+        varsemaine3.set(liste[2].replace(".xlsx", ""))
+        nom_fichier.append(liste[2])
+        ancient_planning3, x, y,planning_theme3 = recupperation_excel(path +liste[2])
         planning.set_ancien_planning3(ancient_planning3)
+    interface_default()
     msgbox = tk.messagebox.showinfo(
         title="Création de fichier", message="Tous les fichiers ont été récupérés")
-    remplir_listecombo_heure()
-    # print(planning.planning)
-    # print(planning.liste_eleve)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    ajout_des_commande_lena()
 
 def ecrire_fichier():
     """
@@ -668,7 +787,21 @@ def ecrire_fichier():
     Returns:
         Aucun.
     """
-    global cpt_chevalsuppr, cpt_heuresuppr
+    global planning_theme
+
+    wb = load_workbook(path_parametre+jour.j+'.xlsx')
+
+    # Accéder à la feuille de calcul souhaitée
+    feuille = wb.active
+
+    # Parcourir les lignes et les colonnes de la feuille de calcul
+
+    largeur = feuille.column_dimensions['B'].width
+    hauteur = feuille.row_dimensions[4].height
+    taille_police = feuille.cell(4, 2).font.size
+
+    print(largeur,hauteur)
+    wb.save(jour.j+'.xlsx')
     workbook = load_workbook(planning.name_fichier)
     sheet = workbook.active
     liste_cheval = list(planning.cheval.keys())
@@ -707,28 +840,19 @@ def ecrire_fichier():
     # vert ligne = #A9D08E
     # vert heure = #70AD47
     # {'thin', 'slantDashDot', 'dotted', 'mediumDashDotDot', 'double', 'medium', 'thick', 'mediumDashed', 'dashed', 'dashDotDot', 'hair', 'mediumDashDot', 'dashDot'}
-    if jour.j == "Mercredi":
-        taillecellule = 107
-    else:
-        taillecellule = 75
-    if jour.j == "Mercredi":
-        hauteurcellule = 94
-    else:
-        hauteurcellule = 90
+    taillecellule = largeur
+    hauteurcellule = hauteur
     double = Side(border_style="thin", color="000000")
     sans = Side(border_style=None, color='FF000000')
-    if cpt_heuresuppr < 0:
-        cpt_heuresuppr = 0
-    if cpt_chevalsuppr < 0:
-        cpt_chevalsuppr = 0
-    for ligne in range(3, len(liste_cheval)+4+cpt_chevalsuppr):
-        for colonne in range(1, len(cle2)+2+cpt_heuresuppr):
+    marge = 0
+    for ligne in range(3, len(liste_cheval)+4+marge):
+        for colonne in range(1, len(cle2)+2+marge):
             sheet.cell(ligne, colonne).border = Border(
                 left=sans, top=sans, right=sans, bottom=sans)
             sheet.cell(ligne, colonne).value = None
             sheet.cell(ligne, colonne).fill = PatternFill(
                 start_color='FFFFFFFF', end_color='FF000000', fill_type=None)
-            sheet.cell(ligne, colonne).font = Font(size="72")
+            sheet.cell(ligne, colonne).font = Font(size=taille_police)
             if colonne-2 < len(cle2) and ligne-4 < len(liste_cheval):
                 sheet.cell(ligne, colonne).border = Border(
                     left=double, top=double, right=double, bottom=double)
@@ -747,7 +871,7 @@ def ecrire_fichier():
             if ligne == 3 and colonne >= 2 and colonne-2 < len(cle2):
                 sheet.cell(
                     ligne, colonne).value = cle2[colonne-2]
-                sheet.cell(ligne, colonne).font = Font(size="72")
+                sheet.cell(ligne, colonne).font = Font(size=taille_police)
             elif colonne == 1 and ligne >= 4 and ligne-4 < len(liste_cheval):
                 sheet.cell(
                     ligne, colonne).value = liste_cheval[ligne-4]
@@ -761,57 +885,69 @@ def ecrire_fichier():
 
     for i in planning.planning:
         if i[1] in planning.cheval and i[0] in planning.liste_heure:
+            # if sheet.cell(planning.cheval[i[1]][1], planning.liste_heure[i[0]]).value == None:
             sheet.cell(planning.cheval[i[1]][1],
                        planning.liste_heure[i[0]]).value = i[2]
+    for i in planning_theme:
+        sheet.cell(len(liste_cheval)+4, dict_heure[i]).value = planning_theme[i]
+        sheet.cell(len(liste_cheval)+4, dict_heure[i]).font = Font(size=taille_police)
+    sheet.cell(len(liste_cheval)+4, 1).value = "theme"
+    sheet.cell(len(liste_cheval)+4, 1).font = Font(size=taille_police)
+
     err = workbook.save(planning.name_fichier)
     if err == None:
         label_enregistrer.config(fg="#ffffff")
-        sauvegarder_liste_eleve()
-        upload_les_excel()
+        fichier = open(path_parametre+"liste_cavalier_" + jour.j + ".txt", "w")
+        fichier.write(ecrire_fichier_cavalier())
+        fichier.close()
 
 
 def add_heure():
-    global cpt_heuresuppr
+    global data
     data[para_input_heure.get().upper()] = []
     para_inserer_listebox(data)
     visualiser_fichier_cavalier(data)
-    cpt_heuresuppr -= 1
 
 
 def suppr_heure():
-    global data, cpt_heuresuppr
+    global data
     del data[heure]
     para_inserer_listebox(data)
     visualiser_fichier_cavalier(data)
-    cpt_heuresuppr += 1
 
 
 def add_eleve():
     global data
     global heure
-    data[heure].append(para_input_eleve.get().upper().strip())
+    nb_carte = -1
+    if v.get() == 1:
+        nb_carte = para_nbcarte.get()
+    data[heure].append((para_input_eleve.get().upper().strip(),nb_carte))
     remplirlisteboxeleve()
     visualiser_fichier_cavalier(data)
 
 
 def add_cheval():
-    global cpt_chevalsuppr
     present = any(para_input_chevaux.get().upper() == tup[1]
                   for tup in chevaux)
-    if not present and len(chevaux)+1 >= int(para_input_ind_chevaux.get()):
+    
+    if not para_input_ind_chevaux.get():
+        ind_cheval = len(chevaux)+1
+    else:
+        ind_cheval = int(para_input_ind_chevaux.get())
+    
+    if not present and len(chevaux)+1 >= ind_cheval:
 
         for cheval in chevaux:
-            if cheval[0] >= int(para_input_ind_chevaux.get()):
+            if cheval[0] >= ind_cheval:
                 cheval[0] += 1
-        chevaux.append([int(para_input_ind_chevaux.get()),
+        chevaux.append([ind_cheval,
                         para_input_chevaux.get().upper()])
         chevaux.sort()
         remplirlisteboxcheval(chevaux)
-        cpt_chevalsuppr -= 1
 
 
 def suppr_cheval():
-    global cpt_chevalsuppr
     if cheval in chevaux:
         chevaux.remove(cheval)
         for che in chevaux:
@@ -819,7 +955,7 @@ def suppr_cheval():
                 che[0] -= 1
         chevaux.sort()
         remplirlisteboxcheval(chevaux)
-        cpt_chevalsuppr += 1
+
 
 
 def ecrire_fichier_cheval(chevaux):
@@ -833,7 +969,9 @@ def suppr_eleve():
     global parajour
     liste = []
     for eleves in data[heure]:
-        if eleves != eleve:
+        print(eleves, eleve)
+        if (eleves[0],eleves[1]) != (eleve[0],eleve[1]):
+            print(eleves, eleve)
             liste.append(eleves)
     data[heure] = liste[:]
     remplirlisteboxeleve()
@@ -841,14 +979,24 @@ def suppr_eleve():
 
 
 def para_enregistrer():
-    global parajour
+    global parajour,user
+    if para_listeCombo_user.get() != "" and para_listeCombo_user.get() == 'Lena' or para_listeCombo_user.get() == 'Karine':
+        with open(path_user, "w") as fichier:
+            fichier.write(para_listeCombo_user.get())
+            user = para_listeCombo_user.get()
+            user_var.set(user)
+        
     if parajour != '' and data:
-        fichier = open("liste_cavalier_" + parajour + ".txt", "w")
+        fichier = open(path_parametre+"liste_cavalier_" + parajour + ".txt", "w")
         fichier.write(ecrire_fichier_cavalier(data))
         fichier.close()
-    fichier = open("liste_cheval.txt", "w")
-    fichier.write(ecrire_fichier_cheval(chevaux))
-    fichier.close()
+    if chevaux:
+        fichier = open(path_cheval, "w")
+        fichier.write(ecrire_fichier_cheval(chevaux))
+        fichier.close()
+    sauvegarder_mail()
+    
+    #maj_excel_ref()
 
 
 def remplirlisteboxcheval(chevaux):
@@ -900,12 +1048,24 @@ def interface_default():
     heure_listebox.place(x=460, y=280)
     historique.place(x=900, y=70)
     label_historique.place(x=900, y=40)
+    label_user.place(x=60, y=70)
     listeCombo.place(x=65, y=100)
     image1.place(x=535, y=606)
     image2.place(x=70, y=606)
     image3.place(x=680, y=220)
     bouton_ouvrir_excel.place(x=1400, y=60)
     bouton_rafraichir.place(x=1400, y=100)
+    
+    label_theme.place(x=133, y=440)
+    theme_entry.place(x=133, y=470)
+    boutton_theme.place(x=140, y=500)
+    label_theme_actuelle.place(x=160, y=530)
+    label_theme_avant1.place(x=650, y=125)
+    label_theme_avant2.place(x=650, y=175)
+    label_theme_avant3.place(x=650, y=225)
+    
+    bouton_word.place(x=1400, y=140)
+    bouton_mail.place(x=1400, y=180)
 
     dict_cheval = {}
 
@@ -932,10 +1092,13 @@ def interface_default():
     if planning.liste_eleve != {}:
         ajouteleve()
     if planning.cheval != []:
-
         ajoutcheval()
+        para_enregistrer()
+        print("enregistrer")
+        ecrire_excel_ref("Mercredi")
+        ecrire_excel_ref("Samedi")
 
-    remplir_listecombo_heure()
+    ajout_des_commande_lena()
 
 
 def interface_paramete():
@@ -951,6 +1114,7 @@ def interface_paramete():
     para_listebox_heure.place(x=400, y=70)
     para_listebox_eleve.place(x=730, y=70)
     para_listeCombo.place(x=65, y=40)
+    para_listeCombo_user.place(x=170, y=40)
     para_input_heure.place(x=560, y=140)
     para_add_heure.place(x=560, y=170)
     para_suppr_heure.place(x=560, y=200)
@@ -963,16 +1127,30 @@ def interface_paramete():
     para_add_chevaux.place(x=220, y=170)
     para_suppr_chevaux.place(x=220, y=200)
     para_input_ind_chevaux.place(x=360, y=140)
+    para_case.place(x=890, y=230)
+    para_nbcarte.place(x=890, y=260)
     # image1.place(x=1050, y=70)
     # image3.place(x=605, y=300)
     image3.place(x=170, y=500)
 
     image4.place(x=1070, y=70)
+    
+    posymail = 290
+    para_label_mail_karine.place(x=730, y=posymail)
+    para_entry_karine.place(x=820, y=posymail)
+    para_label_mail_lena.place(x=730, y=posymail+30)
+    para_entry_lena.place(x=820, y=posymail+30)
+    # para_boutton_mail.place(x=835, y=posymail+60)
+    
+    
+    para_bouton_importer_param.place(x=1300,y=290)
+    para_bouton_exporter_param.place(x=1300,y=325)
+    para_bouton_ouvrir_excel.place(x=1295, y=360)
 
 
 def lire_fichier_chevaux():
     liste = []
-    fichier = open("liste_cheval.txt", "r")
+    fichier = open(path_cheval, "r")
     lignes = fichier.read()
     fichier.close()
     lignes = lignes.split("\n")
@@ -984,15 +1162,17 @@ def lire_fichier_chevaux():
                 liste.append([int(ligne[:2]), ligne[2:].strip()])
     return liste
 
-
 def lire_fichier_cavalier(jour):
     liste = []
     liste_eleve = {}
-    fichier = open("liste_cavalier_" + jour + ".txt", "r")
+    fichier = open(path_parametre+"liste_cavalier_" + jour + ".txt", "r")
     lignes = fichier.read()
     fichier.close()
+    para_visu_fichier.config(state='normal')
     para_visu_fichier.delete('1.0', END)
     para_visu_fichier.insert(END, lignes)
+    para_visu_fichier.config(state='disabled')
+    
     lignes = lignes.split("\n")
     for ligne in lignes:
         if ligne != '':
@@ -1026,11 +1206,13 @@ def visualiser_fichier_cavalier(data):
     txt = ""
     for heure in data.keys():
         for eleve in data[heure]:
-            txt += eleve + "\r\n"
+            txt += eleve[0]+"/"+ str(eleve[1]) + "\r\n"
         txt += "\\heure/" + heure + "\r\n"
     txt += "\\Fin fichier/"
+    para_visu_fichier.config(state='normal')
     para_visu_fichier.delete('1.0', END)
     para_visu_fichier.insert(END, txt)
+    para_visu_fichier.config(state='disabled')
 
 
 def cmp_heure(d):
@@ -1051,18 +1233,24 @@ def cmp_heure(d):
     return (int(heure))
 
 
-def ecrire_fichier_cavalier(data):
+def ecrire_fichier_cavalier(data={}):
     txt = ""
-    cle = list(data.keys())
-
+    if data == {}:
+        cle = list(planning.liste_eleve.keys())
+        eleves = planning.liste_eleve
+    else:
+        cle = list(data.keys())
+        eleves = data
     cle = sorted(cle, key=cmp_heure)
-
+    print(eleves)
+    
     for heure in cle:
-        for eleve in data[heure]:
-            txt += eleve + "\r"
+        for eleve in eleves[heure]:
+            txt += eleve[0]+"/"+ str(eleve[1]) + "\r"
         txt += "\\heure/" + heure + "\r"
     txt += "\\Fin fichier/"
     return txt
+
 
 
 def prochain_jour(semaine, jour_actuel):
@@ -1111,6 +1299,7 @@ def set_background(root, image_path):
     background_label.image = photo
     background_label.place(x=0, y=0, relwidth=1, relheight=1)
     return background_label, photo
+
 
 def nouveau_fichier():
     global pop
@@ -1197,22 +1386,11 @@ def nouveau_fichier():
     def choix_date():
         pop.destroy()
         workbook = Workbook()
-        name = 'liste ' + v.get() + ' ' + date.get() + '.xlsx'
-        workbook.save(name)
-        ftp.telecharger_fichier_ftp(name)
-        samedi_file_names, mercredi_file_names = ftp.download_files_from_ftp()
-        if v.get() == "samedi":
-            files = samedi_file_names
-            menu = file_menu
-        if v.get() == "mercredi":
-            files = mercredi_file_names
-            menu = edit_menu
-        menu.delete(0, tk.END)
-        for i, file_name in enumerate(files[:5]):
-            menu.add_command(
-                label=file_name, command=lambda file_name=file_name:  download_selected_and_recent_files(v.get(), name))
+        name = askdirectory()
+        workbook.save(name + '/liste ' + v.get() +
+                      ' ' + date.get() + '.xlsx')
 
-        download_selected_and_recent_files(v.get(), name)
+        recup_donne()
     pop_valider = Button(pop, text="Valider", command=choix_date)
     pop_valider.place(x=300, y=120)
 
@@ -1231,20 +1409,18 @@ def image(root, image_path, width, height):
     return image_label
 
 
-def ecrire_dans_fichier(tableau_tuples, nom_fichier='donnees.txt'):
-    with open(nom_fichier, 'w') as fichier:
-        for ligne in tableau_tuples:
-            fichier.write(','.join(ligne) + '\n')
 
-
-def lire_depuis_fichier(nom_fichier='donnees.txt'):
-    tableau_tuples = []
-    with open(nom_fichier, 'r') as fichier:
-        lignes = fichier.readlines()
-        for ligne in lignes:
-            heure, cheval, personne = ligne.strip().split(',')
-            tableau_tuples.append((heure, cheval, personne))
-    return tableau_tuples
+def importer_param():
+    chemin = askopenfilename()
+    dezipper(chemin, path_parametre)
+    
+def exporter_param():
+    nom_zip = 'parametre.zip'
+    chemin = zip_fichiers(path_parametre, nom_zip)
+    err =envoyer_email("Lena", chemin,nom_zip,"exportation des parametres",mail)
+    if err != None:
+        msgbox = tk.messagebox.showerror(
+        title="envoie des parametre par mail", message=err)
 
 
 # Importation des modules
@@ -1252,23 +1428,23 @@ cellule = Cellule()  # Création d'une instance de la classe Cellule
 planning = Planning()  # Création d'une instance de la classe Planning
 jour = Jour()  # Création d'une instance de la classe Jour
 
+version = 1.6  # Version actuelle du programme
+user = get_personne()
+print(user)
+mail = get_mail()
 
-ftp = Ftp(adresse_serveur, nom_utilisateur, mot_de_passe)
-# err = ftp.login(user=nom_utilisateur, passwd=mot_de_passe)
-# Liste des fichiers présents sur le serveur
-# fichiers_sur_serveur = ftp.nlst()
-
-# print(fichiers_sur_serveur)
-# if err == "230-Welcome to TrueNAS FTP Server\n230 User lena logged in":
-samedi_file_names, mercredi_file_names = ftp.download_files_from_ftp()
 # Création de l'interface utilisateur
 window = tk.Tk()  # Création de la fenêtre principale
 window.title("Planning")  # Titre de la fenêtre
 window.attributes('-fullscreen', True)  # Affichage en mode plein écran
 # Permet de quitter en appuyant sur la touche "Échap"
-window.bind('<Escape>', lambda e: quitter())
-window_width = window.winfo_width()
-window_height = window.winfo_height()
+window.bind('<Escape>', lambda e: window.destroy())
+
+
+
+# window.wm_attributes('-alpha', 0)
+# window.wm_attributes('-transparentcolor', '#f0f0f0')
+
 
 # window.configure(bg='#b4b4b4')
 set_background(window, "image_fond.png")
@@ -1279,8 +1455,6 @@ widgets_principaux = []
 widgets_parametre = []
 
 ancient_nom = ""
-ancient_nom2 = ""
-ancient_nom3 = ""
 
 image_label = add_centered_image(
     window, "0f382f680a13445c8e6484ecbbe2a2b5-transformed.png", 169*4, 166*4)
@@ -1292,6 +1466,8 @@ image2 = image(window, "image2.png", int(2388/8.5), int(1668/8.5))
 image3 = image(window, "image3.png", int(2388/8.5), int(1668/8.5))
 image4 = image(window, "image4.png", int(2388/7), int(1668/7))
 
+label_version = tk.Label(window, text="Version " + str(version), bg='#b4b4b4')
+label_version.place(x=1400, y=785)
 # Création d'un cadre dans la fenêtre
 # frame = tk.Frame(master=window, width=300, height=100)
 # frame.pack()
@@ -1308,10 +1484,19 @@ varcavalier2 = StringVar()
 varsemaine1 = StringVar()
 varsemaine2 = StringVar()
 varsemaine3 = StringVar()
+theme1 = StringVar()
+theme2 = StringVar()
+theme3 = StringVar()
+theme = StringVar()
+v = IntVar ()
+user_var = StringVar()
+user_var.set(user)
 
-label_jour = tk.Label(window, textvariable=varjour, bg='#ffffff')
+label_jour = tk.Label(window, textvariable=varjour, bg='#b4b4b4')
 
-label_heure = tk.Label(window, textvariable=varheure, bg='#ffffff')
+label_heure = tk.Label(window, textvariable=varheure, bg='#b4b4b4')
+
+label_user = tk.Label(window, textvariable=user_var,font=("Comic Sans MS", 15), bg='#b4b4b4')
 
 # Création d'une étiquette pour le titre
 title_label = tk.Label(
@@ -1346,12 +1531,23 @@ label_cavalier5 = tk.Label(
     window, textvariable=varcavalier2, font=("Corbel", 13), bg='#b4b4b4')
 
 
+
 def correction():
+    
+    plan = []
+    plan.append((cellule.heure, cellule.cheval, cellule.eleve))
+    for cel in planning.ancien_planning:
+        if cel[0] == cellule.heure and cel[2] == cellule.eleve:
+            pass
+        else:
+            plan.append(cel)
+    planning.set_ancien_planning(plan)
+    print(planning.ancien_planning)
+    
     workbook = load_workbook(ancient_nom)
     sheet = workbook.active
     if elevecarte == True and varcavalier.get() == "cheval":
-        unesessionmoins(cellule.eleve)
-
+        unesessionmoins(cellule.eleve,cellule.heure)
 
     for ind in range(1, len(sheet["A"])+1):
 
@@ -1369,8 +1565,12 @@ def correction():
 def absent():
     workbook = load_workbook(ancient_nom)
     sheet = workbook.active
+    for cel in planning.ancien_planning:
+        if cel[0] == cellule.heure and cel[2] == cellule.eleve:
+            planning.ancien_planning.remove(cel)
+    print(planning.ancien_planning)
     if elevecarte == True:
-        unesessionplus(cellule.eleve)
+        unesessionplus(cellule.eleve,cellule.heure)
     for ind in range(1, len(sheet["A"])+1):
 
         if sheet.cell(ind, 1).value == dernier_cheval:
@@ -1380,6 +1580,7 @@ def absent():
     err = workbook.save(ancient_nom)
     if err == None:
         varcavalier.set("cheval")
+
 
 
 dernier_cheval = ""
@@ -1405,6 +1606,27 @@ label_eleve_rattrapage = tk.Label(
     window, text="Ajouter un nom", font=("Corbel", 13), bg='#b4b4b4')
 boutton_eleve_rattrapage = tk.Button(
     window, width=8, bg='#8abd45', text="rattrapage", command=ajouter_rattrapage)
+
+theme_entry = tk.Entry(window)
+
+# style = ttk.Style()
+# style.theme_use("clam")
+
+label_theme = tk.Label(
+    window, text="Ajouter un theme", font=("Corbel", 13), bg='#b4b4b4')
+boutton_theme = tk.Button(
+    window, width=12, bg='#8abd45', text="ajout du theme", command=ajouter_theme)
+label_theme_actuelle = tk.Label(
+    window, textvariable=theme, font=("Corbel", 13), bg='#b4b4b4')
+label_theme_avant1 = tk.Label(
+    window, textvariable=theme1, font=("Corbel", 13), bg='#b4b4b4')
+label_theme_avant2 = tk.Label(
+    window, textvariable=theme2, font=("Corbel", 13), bg='#b4b4b4')
+label_theme_avant3 = tk.Label(
+    window, textvariable=theme3, font=("Corbel", 13), bg='#b4b4b4')
+theme1.set("theme1")
+theme2.set("theme2")
+theme3.set("theme3")
 
 # Fonction appelée lorsqu'un élément est sélectionné dans la liste des élèves
 
@@ -1440,16 +1662,12 @@ def items_selected(event):
         varcavalier2.set("cheval2")
     colorier()
     colorier_ancient_chevaux(ancient_cheval)
+    colorier_chevaux()
     for tup in planning.planning:
-        if (cellule.heure, eleve) == (tup[0], tup[2]):
-            cavalier = []
+        if (cellule.heure, cellule.eleve) == (tup[0], tup[2]) and tup[1] in planning.cheval:
             cellule.set_cheval(tup[1], planning.index_cheval(tup[1]))
-            ancient_cavalier = planning.ancient_eleve_de(cellule.cheval)
-            for i in ancient_cavalier:
-                cavalier.append(f"{i[0]} a {i[1]}")
             varheure_cheval.set(
                 f"HEURE DE TRAVAIL DE: {cellule.cheval}")
-            varcheval.set(cavalier)
             inserer_liste_de_travaille()
     varajout.set(cellule.getCellule())
 
@@ -1466,16 +1684,10 @@ cheval_listbox = tk.Listbox(window, height=47)
 def items_selected_cheval(event):
     # Indices des éléments sélectionnés
     selected_indices = cheval_listbox.curselection()
-    cavalier = []
     cheval = cheval_listbox.get(selected_indices)
     cellule.set_cheval(cheval[1], selected_indices)
-    ancient_cavalier = planning.ancient_eleve_de(
-        cheval_listbox.get(selected_indices)[1])
-    for i in ancient_cavalier:
-        cavalier.append(f"{i[0]} a {i[1]}")
     varheure_cheval.set(f"HEURE DE TRAVAIL DE: {cellule.cheval}")
     inserer_liste_de_travaille()
-    varcheval.set(cavalier)
     varajout.set(cellule.getCellule())
 
 
@@ -1484,6 +1696,7 @@ cheval_listbox.bind('<ButtonRelease-1>', items_selected_cheval)
 
 # Zone de texte pour afficher le planning
 visu_fichier = tk.Text(window, width=70)
+visu_fichier.config(state='disabled')
 
 label_visu_fichier = tk.Label(
     window, text="PREVISUALISATION", font=("Corbel", 14), bg='#8abd45')
@@ -1511,7 +1724,7 @@ boutton_enregistrer = tk.Button(
 
 # Étiquette pour afficher un message après l'enregistrement
 label_enregistrer = tk.Label(
-    window, text="Le fichier a bien été enregistré", font=("Corbel", 13), bg='#b4b4b4')  # le fichier à bien été enregistré
+    window, text="Le fichier a bien été ebregistré", font=("Corbel", 13), bg='#b4b4b4')  # le fichier à bien été enregistré
 label_enregistrer.config(fg="#b4b4b4")
 
 # Étiquette pour afficher l'heure de travail du cheval
@@ -1522,26 +1735,62 @@ label_heure_cheval = tk.Label(
 # Liste déroulante pour les heures de travail
 heure_listebox = tk.Listbox(window, width=25, height=5)
 
+
+
 def rafraichir():
-    dict_planning, cheval, heure = recupperation_excel(
-        "", planning.name_fichier)
+    global planning_theme
+    dict_planning, cheval, heure,planning_theme = recupperation_excel(planning.name_fichier)
+    elements_ajout = [element for element in dict_planning if element not in planning.planning]
+    print(elements_ajout)
+    elements_suppr = [element for element in planning.planning if element not in dict_planning]
+    print(elements_suppr)
+    eleves_carte=[]
+    for heure in planning.liste_eleve:
+        for eleve in planning.liste_eleve[heure]:
+            if eleve[1] != -1:
+                eleves_carte.append((heure,eleve[0]))
+    print(eleves_carte)
+    for cell in elements_suppr:
+        if (cell[0],cell[2]) in eleves_carte:
+            print('cessionplus',cell[2])
+            unesessionplus(cell[2],cell[0])
+    for cell in elements_ajout:
+        if (cell[0],cell[2]) in eleves_carte:
+            print('cessionMOINS',cell[2])
+            unesessionmoins(cell[2],cell[0])
+
     planning.set_planning(dict_planning)
-    planning.set_cheval(cheval)
+    dict_cheval = planning.cheval
+    for i in planning.cheval.keys():
+        if i in cheval:
+            dict_cheval[i][0] = cheval[i][0]
+            
+    planning.set_cheval(dict_cheval)
     planning.set_heure(heure)
     ajoutcheval()
+    changer_heure()
     affichage_txt(jour, planning)
 
 def ouvrir_excel():
     subprocess.Popen(['start', 'excel', planning.name_fichier], shell=True)
 
-
-
+def ecrire_mail():
+    err = envoyer_email(user,planning.name_fichier,nom_fichier[0],"envoie du planning du "+str(extract_date_from_filename(planning.name_fichier))[0:11],mail)
+    if err != None:
+        msgbox = tk.messagebox.showerror(
+        title="envoie des parametre par mail", message=err)
 
 bouton_ouvrir_excel = tk.Button(
     window, text="ouvrir", bg="#8abd45", command=ouvrir_excel)
 
 bouton_rafraichir = tk.Button(
     window, text="rafraichir", bg="#8abd45", command=rafraichir)
+
+bouton_word = tk.Button(
+    window, text="word", bg="#8abd45", command=ecrire_word)
+
+bouton_mail = tk.Button(
+    window, text="mail", bg="#8abd45", command=ecrire_mail)
 
 # Fonction appelée lorsqu'un élément est sélectionné dans la liste des heures de travail
 
@@ -1552,11 +1801,15 @@ def items_selected_heure_cheval(event):
     (h, p) = heure_listebox.get(selected_indices)
     if h != cellule.heure:
         cellule.set_heure(h)
+        changer_heure()
         cellule.set_eleve(p, -1)
     else:
         Nb = 0
         for i in range(0, eleve_listbox.size()):
-            if p == eleve_listbox.get(i):
+            eleve = eleve_listbox.get(i)
+            if isinstance(eleve[1], int):
+                eleve = eleve[0]
+            if p == eleve:
                 cellule.set_eleve(p, Nb)
             Nb += 1
     varajout.set(cellule.getCellule())
@@ -1571,7 +1824,7 @@ label_historique = tk.Label(
 
 # Zone de texte pour afficher l'historique
 historique = tk.Text(window, width=60, height=13)
-
+historique.config(state='disabled')
 
 # Création du menu
 menubar = Menu(window)
@@ -1591,8 +1844,9 @@ def action(event):
 listeCombo.bind("<<ComboboxSelected>>", action)
 
 
-def remplir_listecombo_heure():
+def ajout_des_commande_lena():
     listeCombo.delete(0, "end")
+
     listeCombo['values'] = list(planning.liste_eleve)
 
 
@@ -1604,82 +1858,22 @@ sousmenu.add_command(label="parametre", command=mode_parametre)
 sousmenu.add_command(label="principal", command=mode_default)
 
 
-def download_selected_and_recent_files(day, selected_file):
-    files = ftp.download_selected_and_recent_files(day, selected_file)
-
-    recup_donne2(files)
-
-
 # Ajout des éléments au menu
 menubar.add_command(label="Nouveau", command=nouveau_fichier)
-file_menu = tk.Menu(menubar, tearoff=0)
-menubar.add_cascade(label="Samedi", menu=file_menu)
-
-for i, file_name in enumerate(samedi_file_names[:5]):
-    file_menu.add_command(
-        label=file_name, command=lambda file_name=file_name:  download_selected_and_recent_files("Samedi", file_name))
-
-edit_menu = tk.Menu(menubar, tearoff=0)
-menubar.add_cascade(label="Mercredi", menu=edit_menu)
-
-for i, file_name in enumerate(mercredi_file_names[:5]):
-    edit_menu.add_command(
-        label=file_name, command=lambda file_name=file_name:  download_selected_and_recent_files("Mercredi", file_name))
-
-
-def upload_les_excel():
-    fichier = []
-    if planning.name_fichier:
-        fichier.append(planning.name_fichier)
-    if ancient_nom:
-        fichier.append(ancient_nom)
-    ftp.telecharger_fichier_ftp(fichier)
-
-def sauvegarder_liste_eleve():
-    fichier = open("liste_cavalier_" + jour.j + ".txt", "w")
-    
-    txt = ""
-    cle = list(planning.liste_eleve.keys())
-    cle = sorted(cle, key=cmp_heure)
-
-    for heure in cle:
-        for eleve in planning.liste_eleve[heure]:
-            txt += eleve[0]+"/"+ str(eleve[1]) + "\r"
-        txt += "\\heure/" + heure + "\r"
-    txt += "\\Fin fichier/"
-    
-    fichier.write(txt)
-    fichier.close()
-    
-def quitter():
-    upload_les_excel()
-    suppr_excel()
-    window.quit()
-
-
-def suppr_excel():
-    if planning.name_fichier:
-        os.remove(planning.name_fichier)
-    if ancient_nom:
-        os.remove(ancient_nom)
-    if ancient_nom2:
-        os.remove(ancient_nom2)
-    if ancient_nom3:
-        os.remove(ancient_nom3)
-
-
-# menubar.add_command(label="Jour", command=recup_donne)
+menubar.add_command(label="Jour", command=recup_donne)
 menubar.add_cascade(label="Mode", menu=sousmenu)
-menubar.add_command(label="Quitter!", command=quitter)
+menubar.add_command(label="Quitter!", command=window.quit)
 
 # Affichage du menu dans la fenêtre
 window.config(menu=menubar)
 
 data = {}
 
+
 # interface_paramete()
 
 para_visu_fichier = tk.Text(window, width=70)
+para_visu_fichier.config(state='disabled')
 
 # Étiquette pour afficher l'historique
 para_label_historique = tk.Label(
@@ -1687,6 +1881,7 @@ para_label_historique = tk.Label(
 
 # Zone de texte pour afficher l'historique
 para_historique = tk.Text(window, width=60, height=13)
+para_historique.config(state='disabled')
 
 para_listebox_heure = tk.Listbox(window, width=25, height=45)
 
@@ -1739,23 +1934,25 @@ def items_selected_cheval(event):
 para_listebox_chevaux.bind('<ButtonRelease-1>', items_selected_cheval)
 
 # Création d'une liste déroulante pour sélectionner l'heure
-para_listeCombo = ttk.Combobox(window)
+para_listeCombo = ttk.Combobox(window,width=10)
 para_listeCombo['values'] = ["mercredi", "samedi"]
+
+para_listeCombo_user = ttk.Combobox(window,width=10)
+if user == "Lena":
+    para_listeCombo_user['values'] = ["Lena", "Karine"]
+elif user == "Karine":
+    para_listeCombo_user['values'] = ["Karine", "Lena"]
 
 parajour = ""
 
 
 def action(event):
-    global parajour
-    global data
-    global chevaux
+    global parajour, data, chevaux
     parajour = para_listeCombo.get()  # Élément sélectionné dans la liste déroulante
     data = lire_fichier_cavalier(parajour)
     chevaux = lire_fichier_chevaux()
-
     remplirlisteboxcheval(chevaux)
     para_inserer_listebox(data)
-    return data
 
 
 para_input_chevaux = tk.Entry(window)
@@ -1787,12 +1984,175 @@ para_suppr_eleve = tk.Button(
 para_suppr_enregistrer = tk.Button(
     window, text="ENREGISTRER", command=para_enregistrer, width=12, font=("Helvetica", 18, "bold"), bg='#000000', fg='#ffffff')
 
+def sauvegarder_mail():
+    if para_entry_karine.get() and len(mail) > 0:
+        mail[0] = para_entry_karine.get()
+    elif para_entry_karine.get() and len(mail) == 0:
+        mail.append(para_entry_karine.get())
+    if para_entry_lena.get() and len(mail) > 1:
+        mail[1] = para_entry_lena.get()
+    elif para_entry_lena.get() and len(mail) == 1:
+        mail.append(para_entry_lena.get())
+        
+    with open(path_mail, "w") as f:
+        for i in mail:
+            f.write(i + "\n")
+        
+
+para_label_mail_karine = tk.Label(window, text="mail karine", font=("Corbel", 13), bg='#b4b4b4')
+para_entry_karine = tk.Entry(window, width=25)
+if len(mail) > 0:
+    para_entry_karine.insert(0, mail[0])
+
+para_label_mail_lena = tk.Label(window, text="mail lena", font=("Corbel", 13), bg='#b4b4b4')
+para_entry_lena = tk.Entry(window, width=25)
+if len(mail) > 1:
+    para_entry_lena.insert(0, mail[1])
+
+# para_boutton_mail = tk.Button(window, bg='#8abd45', text="sauvegarder mail", command=sauvegarder_mail)
+
+def ouvrir_excel():
+    print("parajour",parajour)
+    if parajour == "mercredi":
+        subprocess.Popen(['start', 'excel', path_Mercredi], shell=True)
+    elif parajour == "samedi":
+        subprocess.Popen(['start', 'excel', path_Samedi], shell=True)
+
+para_bouton_ouvrir_excel = tk.Button(
+    window, text="ouvrir excel reference", bg="#8abd45", command=ouvrir_excel)
+
+def toggle_entry_nbcarte():
+    if v.get() == 1:
+        para_nbcarte.config(state=NORMAL)
+    else:
+        para_nbcarte.config(state=DISABLED)
+
+para_case = Checkbutton (variable = v,bg='#b4b4b4',text= "eleve à la carte",command=toggle_entry_nbcarte)
+
+para_nbcarte = Entry(window)
+para_nbcarte.insert(0, "nombre de seances")
+para_nbcarte.config(state=DISABLED)
+
+def on_para_nbcarte_click(event):
+    if para_nbcarte.get() == 'nombre de seances':
+        para_nbcarte.delete(0, tk.END)
+para_nbcarte.bind('<FocusIn>', on_para_nbcarte_click)
+
+para_bouton_importer_param = tk.Button(
+    window, text="importer parametre",width=15, bg="#8abd45", command=importer_param)
+
+para_bouton_exporter_param = tk.Button(
+    window, text="exporter parametre",width=15, bg="#8abd45", command=exporter_param)
+
+
 widgets_parametre.extend(
-    [para_visu_fichier, para_label_historique, para_historique, para_listebox_eleve, para_listebox_heure, para_listeCombo, para_input_heure, para_input_eleve, para_suppr_enregistrer, para_suppr_eleve, para_add_eleve, para_suppr_heure, para_add_heure, para_listebox_chevaux, para_input_chevaux, para_add_chevaux, para_suppr_chevaux, para_input_ind_chevaux, image3, image4, para_image1])
+    [para_visu_fichier,para_bouton_importer_param,para_bouton_exporter_param,para_bouton_ouvrir_excel,para_case,para_label_mail_karine,para_entry_lena,para_label_mail_lena,para_entry_karine,para_nbcarte,para_listeCombo_user, para_label_historique, para_historique, para_listebox_eleve, para_listebox_heure, para_listeCombo, para_input_heure, para_input_eleve, para_suppr_enregistrer, para_suppr_eleve, para_add_eleve, para_suppr_heure, para_add_heure, para_listebox_chevaux, para_input_chevaux, para_add_chevaux, para_suppr_chevaux, para_input_ind_chevaux, image3, image4, para_image1])
 
 widgets_principaux.extend([label_jour, label_heure, title_label, boutton_avancer_heure, boutton_reculer_heure, label_cavalier, label_cavalier2, label_cavalier3, label_cavalier6, label_cavalier4,
                            label_cavalier5, label_cavalier7, eleve_listbox, cheval_listbox, label_ajout, boutton_ajouter, boutton_supprimer, visu_fichier, label_visu_fichier,
-                           boutton_enregistrer, bouton_rafraichir, bouton_ouvrir_excel, label_enregistrer, image1, image2, label_heure_cheval, heure_listebox, label_historique, historique, listeCombo, boutton_absent, boutton_correction, eleve_rattrapage, label_eleve_rattrapage, boutton_eleve_rattrapage])
+                           boutton_enregistrer,bouton_rafraichir,bouton_ouvrir_excel, label_enregistrer, image1, image2, label_heure_cheval, heure_listebox, label_historique, historique, listeCombo, boutton_absent, boutton_correction, eleve_rattrapage, label_eleve_rattrapage, boutton_eleve_rattrapage,
+                           theme_entry,bouton_mail,label_user,bouton_word,label_theme,boutton_theme,label_theme_actuelle,label_theme_avant1,label_theme_avant2,label_theme_avant3])
+try:
+    ftp = Ftp("83.113.54.154","lena","1234")
+    connexion=True
+except:
+    print("pas de connexion internet")
+    connexion =False
+if connexion:
+    fichiers = ftp.liste_fichiers()
+    print(fichiers)
+    version_fichiers=[]
+    for fiche in fichiers:
+        version_fiche  = fiche.replace(".zip","")
+        version_fiche = version_fiche.split(" ")[-1]
+        version_fichiers.append(float(version_fiche))
+        
+    version_fiche = max(version_fichiers)
+    fiche = fichiers[version_fichiers.index(version_fiche)]
+    print(version_fiche)
+    print(fiche)
+    if float(version_fiche) > version:
+        import tkinter.messagebox as messagebox
+        response = messagebox.askyesno("Mise à jour disponible", "Une nouvelle version est disponible. Voulez-vous la télécharger ?")
+        if response:
+            current_path = os.getcwd()#C:\Users\33621\Documents\cheval_python\ecuria
+            no_current_path = current_path.rsplit('\\', 1)[0]#C:\Users\33621\Documents\cheval_python
+            path_nv_version = os.path.join(no_current_path, fiche.replace(".zip",""))
+            nom_appli_act = current_path.rsplit('\\', 1)[1]#ecuria
+            print(current_path)
+            def telecharger_et_mettre_a_jour():
+                ftp.telecharger_fichier_zip(fiche)
+                dezipper(fiche, no_current_path, suppr_rep_destination=False)
+                os.remove(fiche)
+
+            def valider():
+                telecharger_et_mettre_a_jour()
+                if raccourci_bureau_var.get():
+                    print("raccourci")
+                    print("la",no_current_path,fiche.replace(".zip",".exe"))
+                    raccourci(no_current_path,fiche.replace(".zip",".exe"))
+                    # Code pour créer un raccourci sur le bureau
+                    
+                if garder_parametre_var.get():
+                    print("garder")
+                    # Code pour garder les paramètres
+                    
+                    path_parametre= os.path.join(path_nv_version, "parametre")
+                    if os.path.exists(path_parametre):
+                        liste_fichier_parametre = os.listdir(os.path.join(current_path, "parametre"))
+                        for fichier in os.listdir(path_parametre):
+                            if fichier in liste_fichier_parametre:
+                                os.remove(os.path.join(path_nv_version, "parametre", fichier))
+                                shutil.copy(os.path.join(current_path, "parametre", fichier), os.path.join(path_nv_version, "parametre"))
+                    else:
+                        shutil.copytree("parametre", path_parametre)
+                
+                if supprimer_ancienne_version_var.get():
+                    print("supprimer")
+                    # os.remove(current_path)
+                    bureau = os.path.join(os.path.expanduser("~"), "Desktop")
+                    try:
+                        os.remove(bureau + "\\" + nom_appli_act + ".lnk")
+                    except:
+                        pass
+                    os.startfile(path_nv_version +"\\"+fiche.replace(".zip",".exe"))
+                    top.destroy()
+                    window.destroy()
+                    # Code pour supprimer l'ancienne version
+                else:
+                    top.destroy()
+
+            def annuler():
+                top.destroy()
+
+            # Création de la fenêtre top
+            top = tk.Toplevel(window)
+            top.title("Mise à jour")
+            top.geometry("300x200")
+            # Création des cases à cocher
+            raccourci_bureau_var = tk.BooleanVar()
+            raccourci_bureau_var.set(True)
+            raccourci_bureau_checkbox = tk.Checkbutton(top, text="Raccourci bureau", variable=raccourci_bureau_var)
+
+            supprimer_ancienne_version_var = tk.BooleanVar()
+            supprimer_ancienne_version_checkbox = tk.Checkbutton(top, text="Supprimer ancienne version", variable=supprimer_ancienne_version_var)
+
+            garder_parametre_var = tk.BooleanVar()
+            garder_parametre_checkbox = tk.Checkbutton(top, text="Garder paramètre", variable=garder_parametre_var)
+
+            # Création des boutons
+            valider_button = tk.Button(top, text="Valider", command=valider)
+            annuler_button = tk.Button(top, text="Annuler", command=annuler)
+
+            # Placement des éléments dans la fenêtre top
+            raccourci_bureau_checkbox.place(x=10, y=10)
+            supprimer_ancienne_version_checkbox.place(x=10, y=40)
+            garder_parametre_checkbox.place(x=10, y=70)
+            valider_button.place(x=250, y=170)
+            annuler_button.place(x=200, y=170)
+
+            # Lancement de la boucle principale de la fenêtre top
+            top.mainloop()
 
 # Lancement de la boucle principale de l'application
 window.mainloop()

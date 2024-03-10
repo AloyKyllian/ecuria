@@ -1,10 +1,10 @@
-from docx import Document
+# from docx import Document
 import docx
-from docx.enum.section import WD_ORIENT
+# from docx.enum.section import WD_ORIENT
 # Create an instance of a word document
 from Planning import *
 from tkinter.filedialog import askdirectory
-from docx.shared import RGBColor
+# from docx.shared import RGBColor
 
 def word(jour,nom,planning,theme_t,user):
     if user == "Lena":
@@ -31,7 +31,7 @@ def word(jour,nom,planning,theme_t,user):
             doc = docx.Document()
             section = doc.sections[-1]
             new_width, new_height = section.page_height, section.page_width
-            section.orientation = WD_ORIENT.LANDSCAPE
+            # section.orientation = WD_ORIENT.LANDSCAPE
             section.page_width = new_width
             section.page_height = new_height
 
@@ -54,7 +54,7 @@ def word(jour,nom,planning,theme_t,user):
                 if eleve not in planning.liste_eleve[heure]:
                     paragraphe = table.cell(i+1, 0).paragraphs[0]
                     paragraphe.text = eleve
-                    paragraphe.runs[0].font.color.rgb = RGBColor(255, 0, 0)
+                    # paragraphe.runs[0].font.color.rgb = RGBColor(255, 0, 0)
 
 
             # Adding data to the table
