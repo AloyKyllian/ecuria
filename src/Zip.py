@@ -24,20 +24,29 @@ def zip_fichiers(repertoire_source, nom_zip):
 
 
 def dezipper(chemin_zip, repertoire_destination,suppr_rep_destination=True):
+    erreur = None
     # Supprimer le répertoire de destination s'il existe déjà
     if suppr_rep_destination:
-        if os.path.exists(repertoire_destination) :
-            shutil.rmtree(repertoire_destination)
+        try :
+            if os.path.exists(repertoire_destination) :
+                shutil.rmtree(repertoire_destination)
 
-        # Créer le répertoire de destination
-        os.makedirs(repertoire_destination)
-
+            # Créer le répertoire de destination
+            os.makedirs(repertoire_destination)
+        except:
+            erreur = "Erreur lors de la suppression du répertoire de destination"
+            print(erreur)
+            return erreur
+    try :
     # Ouvrir le fichier zip
-    with zipfile.ZipFile(chemin_zip, 'r') as fichier_zip:
-        # Extraire tous les fichiers
-        fichier_zip.extractall(repertoire_destination)
-    print(f"Les fichiers ont été extraits dans le répertoire {repertoire_destination}")
-
+        with zipfile.ZipFile(chemin_zip, 'r') as fichier_zip:
+            # Extraire tous les fichiers
+            fichier_zip.extractall(repertoire_destination)
+        print(f"Les fichiers ont été extraits dans le répertoire {repertoire_destination}")
+    except:
+        erreur = "Erreur lors de l'extraction du fichier zip"
+        print(erreur)
+    return erreur
 # Utilisation de la fonction pour décompresser un fichier zip
 # chemin_zip = 'C:/Users/33621/Downloads/parametre.zip'
 # repertoire_destination = 'C:/Users/33621/Documents/cheval_python/ecuria/parametre'

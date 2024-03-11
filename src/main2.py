@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from PIL import Image, ImageTk
 import subprocess
 import shutil
+from tkinter import messagebox
 
 path_parametre = "parametre/"
 path_cavalier_mercredi =path_parametre+ "liste_cavalier_mercredi.txt"
@@ -202,9 +203,16 @@ def ajouter_rattrapage():
     ajouteleve()
     
 def ecrire_word():
-    theme_t = [planning_theme,planning_theme1,planning_theme2,planning_theme3]
-    eleves = lire_fichier_cavalier(jour.j)
-    word(jour.j, nom_fichier, planning,theme_t,user,eleves)
+    err=False
+    try:
+        theme_t = [planning_theme,planning_theme1,planning_theme2,planning_theme3]
+        eleves = lire_fichier_cavalier(jour.j)
+        word(jour.j, nom_fichier, planning,theme_t,user,eleves)
+    except Exception as e:
+        err = True
+        messagebox.showerror("Erreur", f"Erreur lors de la création des fichiers Word : {e}")
+    if not err:
+        messagebox.showinfo("Information", "Les fichiers Word ont été créé avec succès")
 
 def ajouter_theme():
     global planning_theme
@@ -780,6 +788,8 @@ def recup_donne():
     msgbox = tk.messagebox.showinfo(
         title="Création de fichier", message="Tous les fichiers ont été récupérés")
     ajout_des_commande_lena()
+    liste_heure = list(planning.liste_eleve.keys())
+    changement_heure(liste_heure[0])
 
 def ecrire_fichier():
     """
@@ -990,23 +1000,32 @@ def suppr_eleve():
 
 def para_enregistrer():
     global parajour,user
-    if para_listeCombo_user.get() != "" and para_listeCombo_user.get() == 'Lena' or para_listeCombo_user.get() == 'Karine':
-        with open(path_user, "w") as fichier:
-            fichier.write(para_listeCombo_user.get())
-            user = para_listeCombo_user.get()
-            user_var.set(user)
-        
-    if parajour != '' and data:
-        fichier = open(path_parametre+"liste_cavalier_" + parajour + ".txt", "w")
-        fichier.write(ecrire_fichier_cavalier(data))
-        fichier.close()
-    if chevaux:
-        fichier = open(path_cheval, "w")
-        fichier.write(ecrire_fichier_cheval(chevaux))
-        fichier.close()
-    sauvegarder_mail()
+    err=False
+    try:
+        if para_listeCombo_user.get() != "" and para_listeCombo_user.get() == 'Lena' or para_listeCombo_user.get() == 'Karine':
+            with open(path_user, "w") as fichier:
+                fichier.write(para_listeCombo_user.get())
+                user = para_listeCombo_user.get()
+                user_var.set(user)
+            
+        if parajour != '' and data:
+            fichier = open(path_parametre+"liste_cavalier_" + parajour + ".txt", "w")
+            fichier.write(ecrire_fichier_cavalier(data))
+            fichier.close()
+        if chevaux:
+            fichier = open(path_cheval, "w")
+            fichier.write(ecrire_fichier_cheval(chevaux))
+            fichier.close()
+        sauvegarder_mail()
+    except Exception as e:
+        err = True
+        messagebox.showerror("Erreur", f"Erreur lors de la création des fichiers Word : {e}")
+    if not err:
+        messagebox.showinfo("Enregistrement", "Les paramètres ont été enregistrés avec succès!")
+
     
-    #maj_excel_ref()
+    
+
 
 
 def remplirlisteboxcheval(chevaux):
@@ -1131,7 +1150,7 @@ def interface_paramete():
     para_input_eleve.place(x=890, y=140)
     para_add_eleve.place(x=890, y=170)
     para_suppr_eleve.place(x=890, y=200)
-    para_suppr_enregistrer.place(x=635, y=680)
+    para_boutton_enregistrer.place(x=635, y=680)
     para_listebox_chevaux.place(x=60, y=70)
     para_input_chevaux.place(x=220, y=140)
     para_add_chevaux.place(x=220, y=170)
@@ -1440,9 +1459,17 @@ def mettre_a_jour():
     
 
 def importer_param():
-    chemin = askopenfilename()
-    dezipper(chemin, path_parametre)
-    mettre_a_jour()
+    err = False
+    try :
+        chemin = askopenfilename()
+        dezipper(chemin, path_parametre)
+        mettre_a_jour()
+    except Exception as e:
+        err = True
+        messagebox.showerror("Erreur", f"Erreur lors de l'importation des paramètres : {e}")
+    if not err:        
+        messagebox.showinfo("importation de parametre", "Les paramètres ont été importés avec succès!")
+
     
     
 def exporter_param():
@@ -1452,6 +1479,9 @@ def exporter_param():
     if err != {}:
         msgbox = tk.messagebox.showerror(
         title="envoie des parametre par mail", message=err)
+    else:
+            messagebox.showinfo("exportation de parametre", "Les paramètres ont été exportés avec succès!")
+
 
 
 # Importation des modules
@@ -1583,6 +1613,8 @@ def correction():
                        planning.liste_heure[cellule.heure]).value = None
     err = workbook.save(ancient_nom)
     if err == None:
+        ajout_historique(
+            "correction", (cellule.heure,cellule.cheval, cellule.eleve))
         varcavalier.set(cellule.cheval)
 
 def absent():
@@ -1602,6 +1634,8 @@ def absent():
                        planning.liste_heure[cellule.heure]).value = None
     err = workbook.save(ancient_nom)
     if err == None:
+        ajout_historique(
+            "absence", (cellule.heure, cellule.eleve))
         varcavalier.set("cheval")
 
 
@@ -1802,6 +1836,8 @@ def ecrire_mail():
     if err != {}:
         msgbox = tk.messagebox.showerror(
         title="envoie des parametre par mail", message=err)
+    else:
+        messagebox.showinfo("envoie du planning", "Le planning a été envoyé avec succès!")
 
 bouton_ouvrir_excel = tk.Button(
     window, text="ouvrir", bg="#8abd45", command=ouvrir_excel)
@@ -1869,7 +1905,6 @@ listeCombo.bind("<<ComboboxSelected>>", action)
 
 def ajout_des_commande_lena():
     listeCombo.delete(0, "end")
-
     listeCombo['values'] = list(planning.liste_eleve)
 
 
@@ -2004,8 +2039,9 @@ para_add_eleve = tk.Button(
 para_suppr_eleve = tk.Button(
     window, text="supprimer eleve", command=suppr_eleve, width=18, bg='#8abd45')
 
-para_suppr_enregistrer = tk.Button(
+para_boutton_enregistrer = tk.Button(
     window, text="ENREGISTRER", command=para_enregistrer, width=12, font=("Helvetica", 18, "bold"), bg='#000000', fg='#ffffff')
+
 
 def sauvegarder_mail():
     if para_entry_karine.get() and len(mail) > 0:
@@ -2069,7 +2105,7 @@ para_bouton_exporter_param = tk.Button(
 
 
 widgets_parametre.extend(
-    [para_visu_fichier,para_bouton_importer_param,para_bouton_exporter_param,para_bouton_ouvrir_excel,para_case,para_label_mail_karine,para_entry_lena,para_label_mail_lena,para_entry_karine,para_nbcarte,para_listeCombo_user, para_label_historique, para_historique, para_listebox_eleve, para_listebox_heure, para_listeCombo, para_input_heure, para_input_eleve, para_suppr_enregistrer, para_suppr_eleve, para_add_eleve, para_suppr_heure, para_add_heure, para_listebox_chevaux, para_input_chevaux, para_add_chevaux, para_suppr_chevaux, para_input_ind_chevaux, image3, image4, para_image1])
+    [para_visu_fichier,para_bouton_importer_param,para_bouton_exporter_param,para_bouton_ouvrir_excel,para_case,para_label_mail_karine,para_entry_lena,para_label_mail_lena,para_entry_karine,para_nbcarte,para_listeCombo_user, para_label_historique, para_historique, para_listebox_eleve, para_listebox_heure, para_listeCombo, para_input_heure, para_input_eleve, para_boutton_enregistrer, para_suppr_eleve, para_add_eleve, para_suppr_heure, para_add_heure, para_listebox_chevaux, para_input_chevaux, para_add_chevaux, para_suppr_chevaux, para_input_ind_chevaux, image3, image4, para_image1])
 
 widgets_principaux.extend([label_jour, label_heure, title_label, boutton_avancer_heure, boutton_reculer_heure, label_cavalier, label_cavalier2, label_cavalier3, label_cavalier6, label_cavalier4,
                            label_cavalier5, label_cavalier7, eleve_listbox, cheval_listbox, label_ajout, boutton_ajouter, boutton_supprimer, visu_fichier, label_visu_fichier,
