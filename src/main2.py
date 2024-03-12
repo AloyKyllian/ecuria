@@ -1560,7 +1560,7 @@ def importer_param():
     err = False
     try :
         chemin = askopenfilename()
-        dezipper(chemin, path_parametre)
+        dezipper(chemin,path_parametre ,suppr_rep_destination=False)
         mettre_a_jour()
     except Exception as e:
         err = True
@@ -1705,6 +1705,9 @@ def correction():
     sheet = workbook.active
     if elevecarte == True and varcavalier.get() == "cheval":
         unesessionmoins(cellule.eleve,cellule.heure)
+
+    if cellule.heure not in planning.liste_heure:
+        planning.set_liste_eleve(lire_fichier_cavalier(jour.j))
 
     for ind in range(1, len(sheet["A"])+1):
 
