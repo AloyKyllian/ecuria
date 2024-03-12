@@ -1575,7 +1575,7 @@ def exporter_param():
     try:
         nom_zip = 'parametre.zip'
         chemin = zip_fichiers(path_parametre, nom_zip)
-        erreur =envoyer_email("Lena", chemin,nom_zip,"exportation des parametres",mail)
+        erreur =envoyer_email(user, chemin,nom_zip,"exportation des parametres de la version "+str(version),mail)
         if erreur != {}:
             msgbox = tk.messagebox.showerror(
             title="envoie des parametre par mail", message=erreur)
