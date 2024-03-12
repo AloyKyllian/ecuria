@@ -1470,17 +1470,22 @@ def importer_param():
     if not err:        
         messagebox.showinfo("importation de parametre", "Les paramètres ont été importés avec succès!")
 
-    
+
     
 def exporter_param():
-    nom_zip = 'parametre.zip'
-    chemin = zip_fichiers(path_parametre, nom_zip)
-    err =envoyer_email("Lena", chemin,nom_zip,"exportation des parametres",mail)
-    if err != {}:
-        msgbox = tk.messagebox.showerror(
-        title="envoie des parametre par mail", message=err)
-    else:
-            messagebox.showinfo("exportation de parametre", "Les paramètres ont été exportés avec succès!")
+    err = False
+    try:
+        nom_zip = 'parametre.zip'
+        chemin = zip_fichiers(path_parametre, nom_zip)
+        erreur =envoyer_email("Lena", chemin,nom_zip,"exportation des parametres",mail)
+        if erreur != {}:
+            msgbox = tk.messagebox.showerror(
+            title="envoie des parametre par mail", message=erreur)
+    except Exception as e:
+        err = True
+        messagebox.showerror("Erreur", f"Erreur lors de l'exportation des paramètres : {e}")
+    if not err:
+        messagebox.showinfo("exportation de parametre", "Les paramètres ont été exportés avec succès!")
 
 
 
@@ -1832,11 +1837,18 @@ def ouvrir_excel():
     subprocess.Popen(['start', 'excel', planning.name_fichier], shell=True)
 
 def ecrire_mail():
-    err = envoyer_email(user,planning.name_fichier,nom_fichier[0],"envoie du planning du "+str(extract_date_from_filename(planning.name_fichier))[0:11],mail)
-    if err != {}:
-        msgbox = tk.messagebox.showerror(
-        title="envoie des parametre par mail", message=err)
-    else:
+    err=False
+    try:
+        erreur = envoyer_email(user,planning.name_fichier,nom_fichier[0],"envoie du planning du "+str(extract_date_from_filename(planning.name_fichier))[0:11],mail)
+        if erreur != {}:
+            msgbox = tk.messagebox.showerror(
+            title="envoie des parametre par mail", message=erreur)
+        else:
+            messagebox.showinfo("envoie du planning", "Le planning a été envoyé avec succès!")
+    except Exception as e:
+        err = True
+        messagebox.showerror("Erreur", f"Erreur lors de l'envoie du planning : {e}")
+    if not err:
         messagebox.showinfo("envoie du planning", "Le planning a été envoyé avec succès!")
 
 bouton_ouvrir_excel = tk.Button(
