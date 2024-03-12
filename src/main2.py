@@ -21,11 +21,14 @@ from tkinter import messagebox
 path_parametre = "parametre/"
 path_cavalier_mercredi =path_parametre+ "liste_cavalier_mercredi.txt"
 path_cavalier_samedi =path_parametre+ "liste_cavalier_samedi.txt"
+path_cavalier_semaine =path_parametre+ "liste_cavalier_semaine.txt"
 path_cheval =path_parametre+ "liste_cheval.txt"
+path_cheval_semaine =path_parametre+ "liste_cheval_semaine.txt"
 path_mail =path_parametre+ "mail.txt"
 path_user = "user.txt"
 path_Mercredi =path_parametre+ "Mercredi.xlsx"
 path_Samedi =path_parametre+ "Samedi.xlsx"
+path_semaine = path_parametre+ "Semaine.xlsx"
 
 
 def get_personne():
@@ -77,7 +80,11 @@ def ecrire_excel_ref(jour):
     liste_cheval = list(planning.cheval.keys())
     data2 = lire_fichier_cavalier(jour)
     cle2 = list(data2.keys())
-    cle2 = sorted(cle2, key=cmp_heure)
+    if jour != "Semaine":
+        cle2 = sorted(cle2, key=cmp_heure)
+    elif jour == "Semaine":
+        #cle2 =sorted(cle2, key=lambda d: (int(d.split()[0][:-1]), d.split()[1]))
+        cle2 = sorted(cle2, key=cmp_heure_semaine)
     dico_numeros = {
         1: 'A',
         2: 'B',
@@ -549,10 +556,16 @@ def colorier_ancient_chevaux(ancient_cheval_eleve):
             ancient_cheval_eleve[0][1], {'bg': 'red'})
 
 def colorier_chevaux():
-    for cell in planning.planning:
-        if cell[0][0:2] in cellule.heure and cell[1] in planning.cheval:
-            cheval_listbox.itemconfig(planning.cheval[cell[1]][1]-4, {'bg': 'violet'})
-
+    if jour.j != "Semaine":
+        for cell in planning.planning:
+            if cell[0][0:2] in cellule.heure and cell[1] in planning.cheval:
+                cheval_listbox.itemconfig(planning.cheval[cell[1]][1]-4, {'bg': 'violet'})
+    elif jour.j == "Semaine":
+        
+        for cell in planning.planning:
+            print( cell[0][-4:-1] , cellule.heure)
+            if cell[0][0:2] in cellule.heure and cell[1] in planning.cheval and cell[0][-4:-1] in cellule.heure:
+                cheval_listbox.itemconfig(planning.cheval[cell[1]][1]-4, {'bg': 'violet'})
 
 def changer_heure():
     """
@@ -709,10 +722,14 @@ def recup_donne():
     chemin = tk.Tk()
     chemin.withdraw()                 # pour ne pas afficher la fenêtre Tk
     path = askopenfilename()
+    path_che = path_cheval
     if "mercredi" in path.lower():
         jour.set_mercredi()
     elif "samedi" in path.lower():
         jour.set_samedi()
+    elif "semaine" in path.lower():
+        jour.set_semaine()
+        path_che = path_cheval_semaine
     else :
         msgbox = tk.messagebox.showerror(
             title="Erreur de fichier", message="Le fichier n'est pas un fichier de planning")
@@ -722,16 +739,18 @@ def recup_donne():
     planning_theme2={}
     planning_theme3={}
     planning.cheval.clear()
+    print(planning.liste_heure)
     planning.liste_heure.clear()
     
     dict_cheval = {}
-    for i in lire_fichier_chevaux():
+    for i in lire_fichier_chevaux(path_che):
         dict_cheval[i[1]] = [0, i[0]+3]
     planning.set_cheval(dict_cheval)
     # ajoutcheval()
 
     
     planning.set_liste_eleve(lire_fichier_cavalier(jour.j))
+    print(planning.liste_eleve)
     varjour.set(jour.j)
     nom_fichier=[]
     planning.set_nom_fichier(path)
@@ -825,7 +844,11 @@ def ecrire_fichier():
     liste_cheval = list(planning.cheval.keys())
     data2 = lire_fichier_cavalier(jour.j)
     cle2 = list(data2.keys())
-    cle2 = sorted(cle2, key=cmp_heure)
+    if jour.j != "Semaine":
+        cle2 = sorted(cle2, key=cmp_heure)
+    elif jour.j == "Semaine":
+        cle2 = sorted(cle2, key=cmp_heure_semaine)
+    
     dico_numeros = {
         1: 'A',
         2: 'B',
@@ -986,7 +1009,6 @@ def ecrire_fichier_cheval(chevaux):
 
 
 def suppr_eleve():
-    global parajour
     liste = []
     for eleves in data[heure]:
         print(eleves, eleve)
@@ -1012,20 +1034,21 @@ def para_enregistrer():
             fichier = open(path_parametre+"liste_cavalier_" + parajour + ".txt", "w")
             fichier.write(ecrire_fichier_cavalier(data))
             fichier.close()
-        if chevaux:
+        if chevaux and parajour!='semaine':
             fichier = open(path_cheval, "w")
             fichier.write(ecrire_fichier_cheval(chevaux))
             fichier.close()
+        elif chevaux:
+            fichier = open(path_cheval_semaine, "w")
+            fichier.write(ecrire_fichier_cheval(chevaux))
+            fichier.close()
+        
         sauvegarder_mail()
     except Exception as e:
         err = True
-        messagebox.showerror("Erreur", f"Erreur lors de la création des fichiers Word : {e}")
+        messagebox.showerror("Erreur", f"Erreur lors de l'enregistrement des paramètres : {e}")
     if not err:
         messagebox.showinfo("Enregistrement", "Les paramètres ont été enregistrés avec succès!")
-
-    
-    
-
 
 
 def remplirlisteboxcheval(chevaux):
@@ -1126,6 +1149,7 @@ def interface_default():
         print("enregistrer")
         ecrire_excel_ref("Mercredi")
         ecrire_excel_ref("Samedi")
+        ecrire_excel_ref("Semaine")
 
     ajout_des_commande_lena()
 
@@ -1177,9 +1201,9 @@ def interface_paramete():
     para_bouton_ouvrir_excel.place(x=1295, y=360)
 
 
-def lire_fichier_chevaux():
+def lire_fichier_chevaux(path):
     liste = []
-    fichier = open(path_cheval, "r")
+    fichier = open(path, "r")
     lignes = fichier.read()
     fichier.close()
     lignes = lignes.split("\n")
@@ -1260,16 +1284,35 @@ def cmp_heure(d):
         heure = d[0]
     return (int(heure))
 
+def cmp_heure_semaine(d):
+    heure, jour = d.split()
+    print(heure, jour)
+    jours = {"LUNDI": 1, "MARDI": 2, "MERCREDI": 3, "JEUDI": 4, "VENDREDI": 5, "SAMEDI": 6, "DIMANCHE": 7}
+    print(jours[jour], heure)
+    return int(jours[jour]), heure
+
+
+
+
+
 
 def ecrire_fichier_cavalier(data={},carte =False):
     txt = ""
     if data == {}:
         cle = list(planning.liste_eleve.keys())
         eleves = planning.liste_eleve
+        if jour.j != "semaine":
+            cle = sorted(cle, key=cmp_heure)
+        elif jour.j == "semaine":
+            cle = sorted(cle, key=cmp_heure_semaine)
     else:
         cle = list(data.keys())
         eleves = data
-    cle = sorted(cle, key=cmp_heure)
+        if parajour != "semaine":
+            cle = sorted(cle, key=cmp_heure)
+        elif parajour == "semaine":
+            cle = sorted(cle, key=cmp_heure_semaine)
+
     # print(eleves)
     
     for heure in cle:
@@ -1344,6 +1387,24 @@ def nouveau_fichier():
     date_actuelle = datetime.now()
     v = StringVar()
     date = StringVar()
+    
+    # Vérifier si aujourd'hui est déjà un mercredi
+    if date_actuelle.weekday() == 1:  # Le code de semaine pour mercredi est 2 (0 pour lundi, 1 pour mardi, etc.)
+        prochains_mardis = [date_actuelle]
+        prochain_mardi = date_actuelle
+    else:
+        # Trouver le prochain mardi
+        prochain_mardi = prochain_jour("mardi", date_actuelle)
+
+        # Ajouter les trois prochains mardis au tableau
+        prochains_mardis = [prochain_mardi]
+    for _ in range(2):
+        prochain_mardi = prochain_jour("mardi", prochain_mardi)
+        prochains_mardis.append(prochain_mardi)
+
+
+
+  
 
     # Vérifier si aujourd'hui est déjà un mercredi
     if date_actuelle.weekday() == 2:  # Le code de semaine pour mercredi est 2 (0 pour lundi, 1 pour mardi, etc.)
@@ -1386,10 +1447,24 @@ def nouveau_fichier():
     pop_r2_3 = Radiobutton(pop, text=prochains_mercredis[2].strftime("%d-%m-%Y"), variable=date,
                            value=prochains_mercredis[2].strftime("%d-%m-%Y"))
 
+    pop_r3_1 = Radiobutton(pop, text=prochains_mardis[0].strftime("%d-%m-%Y"), variable=date,
+                           value=prochains_mardis[0].strftime("%d-%m-%Y"))
+    pop_r3_2 = Radiobutton(pop, text=prochains_mardis[1].strftime("%d-%m-%Y"), variable=date,
+                           value=prochains_mardis[1].strftime("%d-%m-%Y"))
+    pop_r3_3 = Radiobutton(pop, text=prochains_mardis[2].strftime("%d-%m-%Y"), variable=date,
+                           value=prochains_mardis[2].strftime("%d-%m-%Y"))
+    pop_r3_2 = Radiobutton(pop, text=prochains_mardis[1].strftime("%d-%m-%Y"), variable=date,
+                           value=prochains_mardis[1].strftime("%d-%m-%Y"))
+    pop_r3_3 = Radiobutton(pop, text=prochains_mardis[2].strftime("%d-%m-%Y"), variable=date,
+                           value=prochains_mardis[2].strftime("%d-%m-%Y"))
+
     def affichejoursam():
         pop_r2_1.place_forget()
         pop_r2_2.place_forget()
         pop_r2_3.place_forget()
+        pop_r3_1.place_forget()
+        pop_r3_2.place_forget()
+        pop_r3_3.place_forget()
 
         pop_r1_1.place(y=40, x=80)
         pop_r1_2.place(y=60, x=80)
@@ -1399,11 +1474,26 @@ def nouveau_fichier():
         pop_r1_1.place_forget()
         pop_r1_2.place_forget()
         pop_r1_3.place_forget()
+        pop_r3_1.place_forget()
+        pop_r3_2.place_forget()
+        pop_r3_3.place_forget()
         # Vérifier si aujourd'hui est déjà un mercredi
 
         pop_r2_1.place(y=40, x=80)
         pop_r2_2.place(y=60, x=80)
         pop_r2_3.place(y=80, x=80)
+        
+    def affichejourmar():
+        pop_r2_1.place_forget()
+        pop_r2_2.place_forget()
+        pop_r2_3.place_forget()
+        pop_r1_1.place_forget()
+        pop_r1_2.place_forget()
+        pop_r1_3.place_forget()
+
+        pop_r3_1.place(y=40, x=80)
+        pop_r3_2.place(y=60, x=80)
+        pop_r3_3.place(y=80, x=80)
 
     pop_label = Label(
         pop, text="voulez vous creer un fichier Mercredi ou Samedi")
@@ -1417,6 +1507,10 @@ def nouveau_fichier():
                          value="samedi", command=affichejoursam)
     pop_r2.place(x=10, y=60)
 
+    pop_r3 = Radiobutton(pop, text="Semaine", variable=v,
+                         value="semaine", command=affichejourmar)
+    pop_r3.place(x=10, y=80)
+    
     def choix_date():
         pop.destroy()
         workbook = Workbook()
@@ -1444,9 +1538,13 @@ def image(root, image_path, width, height):
 
 def mettre_a_jour():
     global mail,data,chevaux
+    if parajour != 'semaine':
+        path_che = path_cheval
+    else:
+        path_che = path_cheval_semaine
     if parajour != '':
         data = lire_fichier_cavalier(parajour)
-        chevaux = lire_fichier_chevaux()
+        chevaux = lire_fichier_chevaux(path_che)
         remplirlisteboxcheval(chevaux)
         para_inserer_listebox(data)
     mail = get_mail()
@@ -1601,6 +1699,7 @@ def correction():
             plan.append(cel)
     planning.set_ancien_planning(plan)
     print(planning.ancien_planning)
+    print(planning.liste_heure)
     
     workbook = load_workbook(ancient_nom)
     sheet = workbook.active
@@ -1801,12 +1900,13 @@ heure_listebox = tk.Listbox(window, width=25, height=5)
 
 def rafraichir():
     global planning_theme
-    dict_planning, cheval, heure,planning_theme = recupperation_excel(planning.name_fichier)
+    dict_planning, cheval, heures,planning_theme = recupperation_excel(planning.name_fichier)
     elements_ajout = [element for element in dict_planning if element not in planning.planning]
     print(elements_ajout)
     elements_suppr = [element for element in planning.planning if element not in dict_planning]
     print(elements_suppr)
     eleves_carte=[]
+    print("heure",heures)
     for heure in planning.liste_eleve:
         for eleve in planning.liste_eleve[heure]:
             if eleve[1] != -1:
@@ -1828,7 +1928,7 @@ def rafraichir():
             dict_cheval[i][0] = cheval[i][0]
             
     planning.set_cheval(dict_cheval)
-    planning.set_heure(heure)
+    planning.set_heure(heures)
     ajoutcheval()
     changer_heure()
     affichage_txt(jour, planning)
@@ -2005,7 +2105,7 @@ para_listebox_chevaux.bind('<ButtonRelease-1>', items_selected_cheval)
 
 # Création d'une liste déroulante pour sélectionner l'heure
 para_listeCombo = ttk.Combobox(window,width=10)
-para_listeCombo['values'] = ["mercredi", "samedi"]
+para_listeCombo['values'] = ["mercredi", "samedi","semaine"]
 
 para_listeCombo_user = ttk.Combobox(window,width=10)
 if user == "Lena":
@@ -2020,7 +2120,11 @@ def action(event):
     global parajour, data, chevaux
     parajour = para_listeCombo.get()  # Élément sélectionné dans la liste déroulante
     data = lire_fichier_cavalier(parajour)
-    chevaux = lire_fichier_chevaux()
+    if parajour != 'semaine':
+        path_che = path_cheval
+    else:
+        path_che = path_cheval_semaine
+    chevaux = lire_fichier_chevaux(path_che)
     remplirlisteboxcheval(chevaux)
     para_inserer_listebox(data)
 
@@ -2088,6 +2192,8 @@ def ouvrir_excel():
         subprocess.Popen(['start', 'excel', path_Mercredi], shell=True)
     elif parajour == "samedi":
         subprocess.Popen(['start', 'excel', path_Samedi], shell=True)
+    elif parajour == "semaine":
+        subprocess.Popen(['start', 'excel', path_semaine], shell=True)
 
 para_bouton_ouvrir_excel = tk.Button(
     window, text="ouvrir excel reference", bg="#8abd45", command=ouvrir_excel)

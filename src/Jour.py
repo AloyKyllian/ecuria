@@ -39,3 +39,15 @@ class Jour:
             None
         """
         self.j = "Samedi"
+
+    def set_semaine(self):
+        """
+        Définit le jour comme étant "Samedi".
+
+        Args:
+            self (object): L'instance de la classe qui appelle la méthode.
+
+        Returns:
+            None
+        """
+        self.j = "Semaine"

@@ -19,7 +19,7 @@ def word(jour,nom,planning,theme_t,user,liste_eleves):
     theme_t = theme_t[::-1]
     for heure in planning.liste_eleve:
         liste_cavalier = [eleve for [eleve,nb] in liste_eleves[heure]]
-        if lettre.lower() in heure.lower():
+        if lettre.lower() in heure.lower() or 'semaine' in nom[0]:
             nomfichier = nom[len(nom)-1].lower().replace('liste samedi','').replace('.xlsx','').replace('liste mercredi','')+'_'+heure+'.docx'
             liste_eleve = set()
             for i,plan in enumerate(planning_t):
