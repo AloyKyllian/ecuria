@@ -763,11 +763,6 @@ def recup_donne():
     planning_theme3={}
     planning.cheval.clear()
     planning.liste_heure.clear()
-    
-    # temp_cheval = {}
-    # for cheval in dict_cheval[jour.j]:
-    #     temp_cheval[cheval[1]] = 0
-    # planning.set_cheval(temp_cheval)
 
     planning.set_liste_eleve(dict_eleve[jour.j])
     print(planning.liste_eleve)
@@ -776,12 +771,7 @@ def recup_donne():
     planning.set_nom_fichier(path)
 
     dict_planning, cheval, heure,planning_theme = recupperation_excel(path)
-    # for i in planning.cheval.keys():
-    #     if i in cheval:
-    #         #mise a jour des valeur des chevaux
-    #         dict_cheval[i] = cheval[i][0]
             
-    
     planning.set_heure(heure)
     planning.set_planning(dict_planning)
     planning.set_cheval(remplir_cheval(dict_cheval[jour.j]))
@@ -858,9 +848,6 @@ def ecrire_fichier():
     workbook = Workbook()
     sheet = workbook.active
     
-    # dictio_cheval = {}
-    # for i in dict_cheval[jour.j]:
-    #     dictio_cheval[i[1]] = [0, i[0]+3]
     print(dict_cheval[jour.j])
     liste_cheval = list(dict_cheval[jour.j].keys())
     data2 = dict_eleve[jour.j]
@@ -902,14 +889,9 @@ def ecrire_fichier():
         25: 'Y',
         26: 'Z'
     }
-    # effacer excel
-    # vert ligne = #A9D08E
-    # vert heure = #70AD47
-    # {'thin', 'slantDashDot', 'dotted', 'mediumDashDotDot', 'double', 'medium', 'thick', 'mediumDashed', 'dashed', 'dashDotDot', 'hair', 'mediumDashDot', 'dashDot'}
     taillecellule = largeur
     hauteurcellule = hauteur
     double = Side(border_style="thin", color="000000")
-    sans = Side(border_style=None, color='FF000000')
     ind_ligne = 0
     for ligne in range(3, lignes):
         ind_colonne = 0
@@ -1097,37 +1079,37 @@ def ecrire_fichier_cheval(dict_chevaux):
 def para_enregistrer():
     global parajour,user,dict_cheval,dict_eleve
     err=False
-    # try:
-    if para_listeCombo_user.get() != "" and para_listeCombo_user.get() == 'Lena' or para_listeCombo_user.get() == 'Karine':
-        with open(path_user, "w") as fichier:
-            fichier.write(para_listeCombo_user.get())
-            user = para_listeCombo_user.get()
-            user_var.set(user)
+    try:
+        if para_listeCombo_user.get() != "" and para_listeCombo_user.get() == 'Lena' or para_listeCombo_user.get() == 'Karine':
+            with open(path_user, "w") as fichier:
+                fichier.write(para_listeCombo_user.get())
+                user = para_listeCombo_user.get()
+                user_var.set(user)
+            
+        if parajour != '' and dict_eleve[parajour]:
+            fichier = open(path_parametre+"liste_cavalier_" + parajour + ".txt", "w")
+            fichier.write(ecrire_fichier_cavalier(dict_eleve[parajour]))
+            fichier.close()
+        if dict_cheval[parajour] and parajour!='Semaine':
+            fichier = open(path_cheval, "w")
+            fichier.write(ecrire_fichier_cheval(dict_cheval[parajour]))
+            fichier.close()
+        elif dict_cheval[parajour]:
+            fichier = open(path_cheval_semaine, "w")
+            fichier.write(ecrire_fichier_cheval(dict_cheval[parajour]))
+            fichier.close()
+        # dict_eleve, dict_cheval = lire_parametre()
+        visualiser_fichier_cavalier(dict_eleve[parajour])
+        print("enregistrer excel ref")
+        ecrire_excel_ref("Mercredi")
+        ecrire_excel_ref("Samedi")
+        ecrire_excel_ref("Semaine")
         
-    if parajour != '' and dict_eleve[parajour]:
-        fichier = open(path_parametre+"liste_cavalier_" + parajour + ".txt", "w")
-        fichier.write(ecrire_fichier_cavalier(dict_eleve[parajour]))
-        fichier.close()
-    if dict_cheval[parajour] and parajour!='Semaine':
-        fichier = open(path_cheval, "w")
-        fichier.write(ecrire_fichier_cheval(dict_cheval[parajour]))
-        fichier.close()
-    elif dict_cheval[parajour]:
-        fichier = open(path_cheval_semaine, "w")
-        fichier.write(ecrire_fichier_cheval(dict_cheval[parajour]))
-        fichier.close()
-    # dict_eleve, dict_cheval = lire_parametre()
-    visualiser_fichier_cavalier(dict_eleve[parajour])
-    print("enregistrer excel ref")
-    ecrire_excel_ref("Mercredi")
-    ecrire_excel_ref("Samedi")
-    ecrire_excel_ref("Semaine")
-    
-    sauvegarder_mail()
-        
-    # except Exception as e:
-        # err = True
-        # messagebox.showerror("Erreur", f"Erreur lors de l'enregistrement des paramètres : {e}")
+        sauvegarder_mail()
+            
+    except Exception as e:
+        err = True
+        messagebox.showerror("Erreur", f"Erreur lors de l'enregistrement des paramètres : {e}")
     if not err:
         messagebox.showinfo("Enregistrement", "Les paramètres ont été enregistrés avec succès!")
 
@@ -1210,36 +1192,7 @@ def interface_default():
     print(planning.liste_eleve)
     print(planning.cheval)
 
-    # dict_cheval = {}
-
-    # if parajour != "":
-    #     for i in chevaux:
-    #         if i[1] in planning.cheval:
-    #             if i[0] == planning.cheval[i[1]][1]-3:
-    #                 dict_cheval[i[1]] = planning.cheval[i[1]]
-    #             else:
-    #                 dict_cheval[i[1]] = [planning.nb_heure(i[1]), i[0]+3]
-    #         else:
-
-    #             dict_cheval[i[1]] = [planning.nb_heure(i[1]), i[0]+3]
-
-    #     planning.set_cheval(dict_cheval)
-
-    # if parajour == jour.j:
-    #     planning.set_heure(dict_eleve[parajour])
-    #     planning.set_liste_eleve(dict_eleve[parajour])
-    # elif jour.j != '':
-    #     planning.set_liste_eleve(lire_fichier_cavalier(jour.j))
-    # else:
-    #     planning.set_liste_eleve({})
-    # if planning.liste_eleve != {}:
-    #     ajouteleve()
-    # if planning.cheval != []:
-    #     ajoutcheval()
-    #     para_enregistrer()
-
-
-    # ajout_des_commande_lena()
+    ajout_des_commande_lena()
 
 
 def interface_paramete():
@@ -1250,8 +1203,6 @@ def interface_paramete():
 
     para_image1.place(relx=0.48, rely=0.6, anchor=tk.CENTER)
     para_visu_fichier.place(x=900, y=400)
-    # para_label_historique.place(x=1000, y=40)
-    # para_historique.place(x=1000, y=70)
     para_listebox_heure.place(x=400, y=70)
     para_listebox_eleve.place(x=730, y=70)
     para_listeCombo.place(x=65, y=40)
@@ -1270,8 +1221,6 @@ def interface_paramete():
     para_input_ind_chevaux.place(x=360, y=140)
     para_case.place(x=890, y=230)
     para_nbcarte.place(x=890, y=260)
-    # image1.place(x=1050, y=70)
-    # image3.place(x=605, y=300)
     image3.place(x=170, y=500)
 
     image4.place(x=1070, y=70)
@@ -1281,8 +1230,6 @@ def interface_paramete():
     para_entry_karine.place(x=820, y=posymail)
     para_label_mail_lena.place(x=730, y=posymail+30)
     para_entry_lena.place(x=820, y=posymail+30)
-    # para_boutton_mail.place(x=835, y=posymail+60)
-    
     
     para_bouton_importer_param.place(x=1300,y=290)
     para_bouton_exporter_param.place(x=1300,y=325)
@@ -1311,10 +1258,6 @@ def lire_fichier_cavalier(jour):
     fichier = open(path_parametre+"liste_cavalier_" + jour + ".txt", "r")
     lignes = fichier.read()
     fichier.close()
-    # para_visu_fichier.config(state='normal')
-    # para_visu_fichier.delete('1.0', END)
-    # para_visu_fichier.insert(END, lignes)
-    # para_visu_fichier.config(state='disabled')
     
     lignes = lignes.split("\n")
     for ligne in lignes:
@@ -1330,8 +1273,13 @@ def lire_fichier_cavalier(jour):
 
 
 def para_inserer_listebox(data):
+    cle = list(data.keys())
+    if parajour != "Semaine":
+        cle = sorted(cle, key=cmp_heure)
+    elif parajour == "Semaine":
+        cle = sorted(cle, key=cmp_heure_semaine)
     para_listebox_heure.delete(0, END)
-    for i in list(data.keys()):
+    for i in cle:
         para_listebox_heure.insert(END, i)
 
 
@@ -1349,9 +1297,8 @@ def visualiser_fichier_cavalier(data):
         cle = sorted(cle, key=cmp_heure)
     elif parajour == "Semaine":
         cle = sorted(cle, key=cmp_heure_semaine)
-    
     txt = ""
-    for heure in data.keys():
+    for heure in cle:
         for eleve in data[heure]:
             txt += eleve[0]+"/"+ str(eleve[1]) + "\r\n"
         txt += "\\heure/" + heure + "\r\n"
