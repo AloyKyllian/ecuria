@@ -246,7 +246,7 @@ class Planning():
                 return -2
         if cellule.heure == "heure" or cellule.cheval == "cheval" or cellule.eleve == "eleve":
             return -1
-        elif len(self.cheval) != 0 and self.cheval[cellule.cheval][0] >= 4:
+        elif len(self.cheval) != 0 and self.cheval[cellule.cheval][1] >= 4:
             return -3
         elif cellule.getCellule() in self.planning:
             return -5
@@ -254,7 +254,7 @@ class Planning():
             self.planning.append(cellule.getCellule())
             self.planning.sort()
             if cellule.cheval in self.cheval:
-                self.cheval[cellule.cheval][0] += 1
+                self.cheval[cellule.cheval][1] += 1
             else:
                 return -4
 
@@ -290,7 +290,7 @@ class Planning():
         if cellule.getCellule() in self.planning:
             self.planning.remove(cellule.getCellule())
             if cellule.cheval in self.cheval:
-                self.cheval[cellule.cheval][0] -= 1
+                self.cheval[cellule.cheval][1] -= 1
             else:
                 return -4
         else:
@@ -355,7 +355,7 @@ class Planning():
         index = planning.index_cheval(nom_du_cheval)
         print(f"L'index de {nom_du_cheval} est {index}.")
         """
-        return self.cheval[cheval][1]-4
+        return self.cheval[cheval][0]
 
     def ancient_cheval_de(self, personne, heure):
         """
@@ -385,17 +385,17 @@ class Planning():
         cavalier = []
         for i in self.ancien_planning:
             if (i[2].upper(), i[0].upper()) == (personne.upper(), heure.upper()) and i[1] in self.cheval:
-                cavalier.append((i[1], self.cheval[i[1]][1]-4))
+                cavalier.append((i[1], self.cheval[i[1]][0]))
         if len(cavalier) == 0:
             cavalier.append(("cheval", ""))
         for i in self.ancien_planning2:
             if (i[2].upper(), i[0].upper()) == (personne.upper(), heure.upper()) and i[1] in self.cheval:
-                cavalier.append((i[1], self.cheval[i[1]][1]-4))
+                cavalier.append((i[1], self.cheval[i[1]][0]))
         if len(cavalier) == 1:
             cavalier.append(("cheval1", ""))
         for i in self.ancien_planning3:
             if (i[2].upper(), i[0].upper()) == (personne.upper(), heure.upper()) and i[1] in self.cheval:
-                cavalier.append((i[1], self.cheval[i[1]][1]-4))
+                cavalier.append((i[1], self.cheval[i[1]][0]))
         if len(cavalier) == 2:
             cavalier.append(("cheval2", ""))
         return cavalier
@@ -475,6 +475,7 @@ class Planning():
         """
         nbr = 0
         for i in self.planning:
+            print(i[1], cheval)
             if i[1] == cheval:
                 nbr = nbr+1
         return nbr
