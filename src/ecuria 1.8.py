@@ -84,17 +84,6 @@ def ecrire_excel_ref(jour):
     workbook = Workbook()
     sheet = workbook.active
     
-    #lecture des fichiers parametres (a revoir pour les supprimer)
-    # if jour != 'semaine':
-    #     path_che = path_cheval
-    # else:
-    #     path_che = path_cheval_semaine
-    
-    # for i in lire_fichier_chevaux(path_che):
-    #     dict_cheval[i[1]] = [0, i[0]+3]
-        
-    # 
-    # data2 = lire_fichier_cavalier(jour)
     print(dict_cheval[jour])
     liste_cheval = list(dict_cheval[jour].keys())
     data2 = dict_eleve[jour]
@@ -812,7 +801,7 @@ def recup_donne():
     
     msgbox = tk.messagebox.showinfo(
         title="Création de fichier", message="Tous les fichiers ont été récupérés")
-    ajout_des_commande_lena()
+    remplir_listbox_heure()
     liste_heure = list(planning.liste_eleve.keys())
     changement_heure(liste_heure[0])
 
@@ -952,9 +941,14 @@ def ecrire_fichier():
 
 def add_heure():
     global dict_eleve
-    dict_eleve[parajour][para_input_heure.get().upper()] = []
-    para_inserer_listebox(dict_eleve[parajour])
-    visualiser_fichier_cavalier(dict_eleve[parajour])
+    # if para_input_heure.get().upper() not in dict_eleve[parajour] and ("K" in para_input_heure.get().upper() or "L" in para_input_heure.get().upper()) :
+    try:
+        dict_eleve[parajour][para_input_heure.get().upper()] = []
+        para_inserer_listebox(dict_eleve[parajour])
+        visualiser_fichier_cavalier(dict_eleve[parajour])
+    except:
+        messagebox.showerror(
+            "Erreur", "L'heure existe déjà ou n'est pas valide (la forme correcte dois commence par un nombre)")
 
 def suppr_heure(dict_eleve,heure):
     dict_eleve[parajour] = param.suppr_heure(dict_eleve[parajour], heure)
@@ -964,12 +958,16 @@ def suppr_heure(dict_eleve,heure):
 def add_eleve():
     global dict_eleve
     global heure
-    nb_carte = -1
-    if v.get() == 1:
-        nb_carte = para_nbcarte.get()
-    dict_eleve[parajour][heure].append((para_input_eleve.get().upper().strip(),nb_carte))
-    remplirlisteboxeleve()
-    visualiser_fichier_cavalier(dict_eleve[parajour])
+    try:
+        nb_carte = -1
+        if v.get() == 1:
+            nb_carte = para_nbcarte.get()
+        dict_eleve[parajour][heure].append((para_input_eleve.get().upper().strip(),nb_carte))
+        remplirlisteboxeleve()
+        visualiser_fichier_cavalier(dict_eleve[parajour])
+    except:
+        messagebox.showerror(
+            "Erreur", "L'élève existe déjà ou n'est pas valide")
 
 def add_cheval():
     liste_cheval = []
@@ -1192,7 +1190,7 @@ def interface_default():
     print(planning.liste_eleve)
     print(planning.cheval)
 
-    ajout_des_commande_lena()
+    remplir_listbox_heure()
 
 
 def interface_paramete():
@@ -1549,16 +1547,6 @@ def lire_parametre():
     print("cheval : ",dict_cheval)
     
     return dict_eleve, dict_cheval
-    # global mail,dict_eleve[parajour],chevaux
-    # if parajour != 'Semaine':
-    #     path_che = path_cheval
-    # else:
-    #     path_che = path_cheval_semaine
-    # dict_eleve[parajour] = lire_fichier_cavalier(parajour)
-    # chevaux = lire_fichier_chevaux(path_che)
-    # mail = get_mail()
-    # remplirlisteboxcheval(chevaux)
-    # para_inserer_listebox(dict_eleve[parajour])
 
 def mettre_a_jour():
     global dict_eleve, dict_cheval,mail
@@ -1602,7 +1590,44 @@ def exporter_param():
     if not err:
         messagebox.showinfo("exportation de parametre", "Les paramètres ont été exportés avec succès!")
 
+def on_enter_pressed(event):
+    if str(window.focus_get()) == ".!entry":
+        ajouter_rattrapage()
+    elif str(window.focus_get()) == ".!entry2":
+        ajouter_theme()
+    elif str(window.focus_get()) == ".!entry3" or str(window.focus_get()) == ".!entry4":
+        add_cheval()
+    elif str(window.focus_get()) == ".!entry5":
+        add_heure()
+    elif str(window.focus_get()) == ".!entry6" or str(window.focus_get()) == ".!entry9":
+        add_eleve()
+    elif title_label.place_info():
+        ajouter()
 
+    focused_widget = window.focus_get()
+    print(str(focused_widget)[1:])
+
+def on_delete_pressed(event):
+    if str(window.focus_get())[1:] == "para_listebox_chevaux":
+        suppr_cheval()
+    elif str(window.focus_get())[1:] == "para_listebox_eleve":
+        suppr_eleve()
+    elif str(window.focus_get())[1:] == "para_listebox_heure":
+        suppr_heure()
+    elif title_label.place_info():
+        supprimer()
+
+def on_right_pressed(event):
+    heure_suivant()
+    
+def on_left_pressed(event):
+    heure_precedant()
+
+def on_crtls_pressed(event):
+    if title_label.place_info():
+        ecrire_fichier()
+    elif para_image1.place_info():
+        para_enregistrer()
 
 # Importation des modules
 cellule = Cellule()  # Création d'une instance de la classe Cellule
@@ -1619,9 +1644,13 @@ mail = get_mail()
 window = tk.Tk()  # Création de la fenêtre principale
 window.title("Planning")  # Titre de la fenêtre
 window.attributes('-fullscreen', True)  # Affichage en mode plein écran
-# Permet de quitter en appuyant sur la touche "Échap"
-window.bind('<Escape>', lambda e: window.destroy())
 
+window.bind("<Return>", on_enter_pressed)
+window.bind("<Right>", on_right_pressed)
+window.bind("<Left>", on_left_pressed)
+window.bind("<Control-s>", on_crtls_pressed)
+window.bind("<Control-S>", on_crtls_pressed)
+window.bind("<Delete>", on_delete_pressed)
 set_background(window, "image_fond.png")
 
 widgets_principaux = []
@@ -1642,9 +1671,6 @@ image4 = image(window, "image4.png", int(2388/7), int(1668/7))
 
 label_version = tk.Label(window, text="Version " + str(version), bg='#b4b4b4')
 label_version.place(x=1400, y=785)
-# Création d'un cadre dans la fenêtre
-# frame = tk.Frame(master=window, width=300, height=100)
-# frame.pack()
 
 # Définition des variables de contrôle
 varheure = StringVar()
@@ -1794,12 +1820,10 @@ varcavalier1.set("cheval1")
 varcavalier2.set("cheval2")
 
 # Liste déroulante pour les élèves
-eleve_listbox = tk.Listbox(window, yscrollcommand=True)
+eleve_listbox = tk.Listbox(window,name="eleve_listbox", yscrollcommand=True)
 
 eleve_rattrapage = tk.Entry(window)
 
-# style = ttk.Style()
-# style.theme_use("clam")
 
 label_eleve_rattrapage = tk.Label(
     window, text="Ajouter un nom", font=("Corbel", 13), bg='#b4b4b4')
@@ -1807,9 +1831,6 @@ boutton_eleve_rattrapage = tk.Button(
     window, width=8, bg='#8abd45', text="rattrapage", command=ajouter_rattrapage)
 
 theme_entry = tk.Entry(window)
-
-# style = ttk.Style()
-# style.theme_use("clam")
 
 label_theme = tk.Label(
     window, text="Ajouter un theme", font=("Corbel", 13), bg='#b4b4b4')
@@ -1828,54 +1849,53 @@ theme2.set("theme2")
 theme3.set("theme3")
 
 # Fonction appelée lorsqu'un élément est sélectionné dans la liste des élèves
-
-
 def items_selected(event):
     global dernier_cheval,elevecarte
     # Indices des éléments sélectionnés
     selected_indices = eleve_listbox.curselection()
-    eleve = eleve_listbox.get(selected_indices)
+    if len(selected_indices) > 0:
+        eleve = eleve_listbox.get(selected_indices)
 
-    cellule.set_eleve(eleve, selected_indices[0])
-    elevecarte = False
-    if isinstance(cellule.eleve[1], int):
-        cellule.eleve = cellule.eleve[0]
-        elevecarte = True
-        
-    ancient_cheval = planning.ancient_cheval_de(
-            cellule.eleve, cellule.heure)
+        cellule.set_eleve(eleve, selected_indices[0])
+        elevecarte = False
+        if isinstance(cellule.eleve[1], int):
+            cellule.eleve = cellule.eleve[0]
+            elevecarte = True
+            
+        ancient_cheval = planning.ancient_cheval_de(
+                cellule.eleve, cellule.heure)
 
-    # Mise à jour des étiquettes des chevaux associés
-    if ancient_cheval[0][1] != "":
-        varcavalier.set(ancient_cheval[0][0])
-        dernier_cheval = ancient_cheval[0][0]
-    else:
-        varcavalier.set("cheval")
-    if len(ancient_cheval) >= 2:
-        varcavalier1.set(ancient_cheval[1][0])
-    else:
-        varcavalier1.set("cheval1")
-    if len(ancient_cheval) >= 3:
-        varcavalier2.set(ancient_cheval[2][0])
-    else:
-        varcavalier2.set("cheval2")
-    colorier()
-    colorier_ancient_chevaux(ancient_cheval)
-    colorier_chevaux()
-    for tup in planning.planning:
-        if (cellule.heure, cellule.eleve) == (tup[0], tup[2]) and tup[1] in planning.cheval:
-            cellule.set_cheval(tup[1], planning.index_cheval(tup[1]))
-            varheure_cheval.set(
-                f"HEURE DE TRAVAIL DE: {cellule.cheval}")
-            inserer_liste_de_travaille()
-    varajout.set(cellule.getCellule())
+        # Mise à jour des étiquettes des chevaux associés
+        if ancient_cheval[0][1] != "":
+            varcavalier.set(ancient_cheval[0][0])
+            dernier_cheval = ancient_cheval[0][0]
+        else:
+            varcavalier.set("cheval")
+        if len(ancient_cheval) >= 2:
+            varcavalier1.set(ancient_cheval[1][0])
+        else:
+            varcavalier1.set("cheval1")
+        if len(ancient_cheval) >= 3:
+            varcavalier2.set(ancient_cheval[2][0])
+        else:
+            varcavalier2.set("cheval2")
+        colorier()
+        colorier_ancient_chevaux(ancient_cheval)
+        colorier_chevaux()
+        for tup in planning.planning:
+            if (cellule.heure, cellule.eleve) == (tup[0], tup[2]) and tup[1] in planning.cheval:
+                cellule.set_cheval(tup[1], planning.index_cheval(tup[1]))
+                varheure_cheval.set(
+                    f"HEURE DE TRAVAIL DE: {cellule.cheval}")
+                inserer_liste_de_travaille()
+        varajout.set(cellule.getCellule())
 
 
 # Association de la fonction à l'événement de relâchement du bouton de la souris
-eleve_listbox.bind('<ButtonRelease-1>', items_selected)
+eleve_listbox.bind('<<ListboxSelect>>', items_selected)
 
 # Liste déroulante pour les chevaux
-cheval_listbox = tk.Listbox(window, height=47)
+cheval_listbox = tk.Listbox(window,name="cheval_listbox", height=47)
 
 # Fonction appelée lorsqu'un élément est sélectionné dans la liste des chevaux
 
@@ -1883,15 +1903,16 @@ cheval_listbox = tk.Listbox(window, height=47)
 def items_selected_cheval(event):
     # Indices des éléments sélectionnés
     selected_indices = cheval_listbox.curselection()
-    cheval = cheval_listbox.get(selected_indices)
-    cellule.set_cheval(cheval[1], selected_indices)
-    varheure_cheval.set(f"HEURE DE TRAVAIL DE: {cellule.cheval}")
-    inserer_liste_de_travaille()
-    varajout.set(cellule.getCellule())
+    if len(selected_indices) > 0:
+        cheval = cheval_listbox.get(selected_indices)
+        cellule.set_cheval(cheval[1], selected_indices)
+        varheure_cheval.set(f"HEURE DE TRAVAIL DE: {cellule.cheval}")
+        inserer_liste_de_travaille()
+        varajout.set(cellule.getCellule())
 
 
 # Association de la fonction à l'événement de relâchement du bouton de la souris
-cheval_listbox.bind('<ButtonRelease-1>', items_selected_cheval)
+cheval_listbox.bind('<<ListboxSelect>>', items_selected_cheval)
 
 # Zone de texte pour afficher le planning
 visu_fichier = tk.Text(window, width=70)
@@ -1923,7 +1944,7 @@ boutton_enregistrer = tk.Button(
 
 # Étiquette pour afficher un message après l'enregistrement
 label_enregistrer = tk.Label(
-    window, text="Le fichier a bien été ebregistré", font=("Corbel", 13), bg='#b4b4b4')  # le fichier à bien été enregistré
+    window, text="Le fichier a bien été enregistré", font=("Corbel", 13), bg='#b4b4b4')  # le fichier à bien été enregistré
 label_enregistrer.config(fg="#b4b4b4")
 
 # Étiquette pour afficher l'heure de travail du cheval
@@ -1932,7 +1953,7 @@ label_heure_cheval = tk.Label(
 
 
 # Liste déroulante pour les heures de travail
-heure_listebox = tk.Listbox(window, width=25, height=5)
+heure_listebox = tk.Listbox(window,name="heure_listebox", width=25, height=5)
 
 
 
@@ -2002,25 +2023,26 @@ bouton_mail = tk.Button(
 def items_selected_heure_cheval(event):
     # Indices des éléments sélectionnés
     selected_indices = heure_listebox.curselection()
-    (h, p) = heure_listebox.get(selected_indices)
-    if h != cellule.heure:
-        cellule.set_heure(h)
-        changer_heure()
-        cellule.set_eleve(p, -1)
-    else:
-        Nb = 0
-        for i in range(0, eleve_listbox.size()):
-            eleve = eleve_listbox.get(i)
-            if isinstance(eleve[1], int):
-                eleve = eleve[0]
-            if p == eleve:
-                cellule.set_eleve(p, Nb)
-            Nb += 1
-    varajout.set(cellule.getCellule())
+    if len(selected_indices) > 0:
+        (h, p) = heure_listebox.get(selected_indices)
+        if h != cellule.heure:
+            cellule.set_heure(h)
+            changer_heure()
+            cellule.set_eleve(p, -1)
+        else:
+            Nb = 0
+            for i in range(0, eleve_listbox.size()):
+                eleve = eleve_listbox.get(i)
+                if isinstance(eleve[1], int):
+                    eleve = eleve[0]
+                if p == eleve:
+                    cellule.set_eleve(p, Nb)
+                Nb += 1
+        varajout.set(cellule.getCellule())
 
 
 # Association de la fonction à l'événement de relâchement du bouton de la souris
-heure_listebox.bind('<ButtonRelease-1>', items_selected_heure_cheval)
+heure_listebox.bind('<<ListboxSelect>>', items_selected_heure_cheval)
 
 # Étiquette pour afficher l'historique
 label_historique = tk.Label(
@@ -2048,7 +2070,7 @@ def action(event):
 listeCombo.bind("<<ComboboxSelected>>", action)
 
 
-def ajout_des_commande_lena():
+def remplir_listbox_heure():
     listeCombo.delete(0, "end")
     listeCombo['values'] = list(planning.liste_eleve)
 
@@ -2085,7 +2107,7 @@ para_label_historique = tk.Label(
 para_historique = tk.Text(window, width=60, height=13)
 para_historique.config(state='disabled')
 
-para_listebox_heure = tk.Listbox(window, width=25, height=45)
+para_listebox_heure = tk.Listbox(window,name="para_listebox_heure", width=25, height=45)
 
 heure = ""
 
@@ -2094,15 +2116,16 @@ def items_selected_heure(event):
     global heure
     # Indices des éléments sélectionnés
     selected_indices = para_listebox_heure.curselection()
-    heure = para_listebox_heure.get(selected_indices)
-    remplirlisteboxeleve()
+    if len(selected_indices) > 0:
+        heure = para_listebox_heure.get(selected_indices)
+        remplirlisteboxeleve()
 
 
 # Association de la fonction à l'événement de relâchement du bouton de la souris
-para_listebox_heure.bind('<ButtonRelease-1>', items_selected_heure)
+para_listebox_heure.bind('<<ListboxSelect>>', items_selected_heure)
 
 
-para_listebox_eleve = tk.Listbox(window, width=25, height=12)
+para_listebox_eleve = tk.Listbox(window,name="para_listebox_eleve", width=25, height=12)
 
 
 eleve = ""
@@ -2112,14 +2135,15 @@ def items_selected_eleve(event):
     # Indices des éléments sélectionnés
     global eleve
     selected_indices = para_listebox_eleve.curselection()
-    eleve = para_listebox_eleve.get(selected_indices)
+    if len(selected_indices) > 0:
+        eleve = para_listebox_eleve.get(selected_indices)
 
 
 # Association de la fonction à l'événement de relâchement du bouton de la souris
-para_listebox_eleve.bind('<ButtonRelease-1>', items_selected_eleve)
+para_listebox_eleve.bind('<<ListboxSelect>>', items_selected_eleve)
 
 
-para_listebox_chevaux = tk.Listbox(window, width=25, height=45)
+para_listebox_chevaux = tk.Listbox(window,name="para_listebox_chevaux", width=25, height=45)
 
 cheval = ""
 
@@ -2128,11 +2152,12 @@ def items_selected_cheval(event):
     global cheval
     # Indices des éléments sélectionnés
     selected_indices = para_listebox_chevaux.curselection()
-    cheval = list(para_listebox_chevaux.get(selected_indices))
+    if len(selected_indices) > 0:
+        cheval = list(para_listebox_chevaux.get(selected_indices))
 
 
 # Association de la fonction à l'événement de relâchement du bouton de la souris
-para_listebox_chevaux.bind('<ButtonRelease-1>', items_selected_cheval)
+para_listebox_chevaux.bind('<<ListboxSelect>>', items_selected_cheval)
 
 # Création d'une liste déroulante pour sélectionner l'heure
 para_listeCombo = ttk.Combobox(window,width=10)
