@@ -211,7 +211,7 @@ def heure_suivant():
 
 
 def ajouter_rattrapage():
-    planning.liste_eleve[cellule.heure].append((eleve_rattrapage.get().upper(),-1))
+    planning.liste_eleve[cellule.heure].append([eleve_rattrapage.get().upper(),-1])
     ajouteleve()
     
 def ecrire_word():
@@ -427,14 +427,13 @@ def inserer_listbox(i):
     Returns:
         Aucun.
     """
+    print(i)
     if i[1] == -1:
         i = i[0]
     eleve_listbox.insert(tk.END, i)
-    try:
-        entier_valeur = int(i[1])
+    print(i)
+    if len(i) == 2:
         i = i[0]
-    except ValueError:
-        pass
     # if int(i[1]) <= 10 and int(i[1]) >= 0:
     #     i = i[0]
     if len(planning.planning) != 0:
@@ -457,11 +456,11 @@ def ajouteleve():
     Returns:
         Aucun.
     """
-
-    vider_listebox(eleve_listbox)
-    if cellule.heure != 'heure':
-        for i in planning.liste_eleve[cellule.heure]:
-            inserer_listbox(i)
+    if cellule.heure in planning.liste_eleve:
+        vider_listebox(eleve_listbox)
+        if cellule.heure != 'heure':
+            for i in planning.liste_eleve[cellule.heure]:
+                inserer_listbox(i)
 
 
 def ajoutuncheval(cheval, ind):
@@ -527,13 +526,10 @@ def colorier():
             ancient = planning.ancient_cheval_de(i[0], cellule.heure)
         else:
             ancient = planning.ancient_cheval_de(i, cellule.heure)
-        print("ancien",ancient)
         for y in ancient:
             if y[1] != "":
                 setcheval.add(y[1])
-    print(setcheval)
     for i in setcheval:
-        print(i)
         cheval_listbox.itemconfig(
             i, {'bg': 'green'})
 
@@ -1180,23 +1176,25 @@ def interface_default():
     bouton_word.place(x=1400, y=140)
     bouton_mail.place(x=1400, y=180)
 
-    if parajour == jour.j and jour.j != '':
+    if jour.j != '':
         temp_dict = {}
         cle = list(dict_eleve[jour.j].keys())
+        print("interface_default cle",cle)
         if parajour != "Semaine":
             cle = sorted(cle, key=cmp_heure)
         elif parajour == "Semaine":
             cle = sorted(cle, key=cmp_heure_semaine)
         for heure in cle:
             temp_dict[heure] = dict_eleve[jour.j][heure]
+        
         planning.set_liste_eleve(temp_dict)
         planning.set_cheval(dict_cheval[jour.j])
         ajoutcheval()
         ajouteleve()
         
 
-    print(planning.liste_eleve)
-    print(planning.cheval)
+    print("interface_default planning.liste_eleve",planning.liste_eleve)
+    print("interface_default planning.cheval",planning.cheval)
 
     remplir_listbox_heure()
 
@@ -1552,6 +1550,7 @@ def lire_parametre():
     dict_cheval = {"Semaine":lire_fichier_chevaux(path_cheval_semaine), "Mercredi":lire_fichier_chevaux(path_cheval), "Samedi":lire_fichier_chevaux(path_cheval)}
 
     print("eleve : ",dict_eleve)
+    print("\n\n\n\n")
     print("cheval : ",dict_cheval)
     
     return dict_eleve, dict_cheval
@@ -1567,7 +1566,6 @@ def mettre_a_jour():
     if len(mail) > 1:
         para_entry_lena.delete(0, END)
         para_entry_lena.insert(0, mail[1])
-    return dict_eleve, dict_cheval
 
 def importer_param():
     err = False
@@ -1578,14 +1576,15 @@ def importer_param():
     except Exception as e:
         err = True
         messagebox.showerror("Erreur", f"Erreur lors de l'importation des paramètres : {e}")
-    if not err:        
-        liste_cheval = []
-        for chevali in dict_cheval[parajour]:
-            liste_cheval.append([dict_cheval[parajour][chevali][0],chevali])
-        remplirlisteboxcheval(liste_cheval)
-        remplirlisteboxeleve()
-        para_inserer_listebox(dict_eleve[parajour])
-        visualiser_fichier_cavalier(dict_eleve[parajour])
+    if not err:
+        if parajour != "":
+            liste_cheval = []
+            for chevali in dict_cheval[parajour]:
+                liste_cheval.append([dict_cheval[parajour][chevali][0],chevali])
+            remplirlisteboxcheval(liste_cheval)
+            remplirlisteboxeleve()
+            para_inserer_listebox(dict_eleve[parajour])
+            visualiser_fichier_cavalier(dict_eleve[parajour])
         messagebox.showinfo("importation de parametre", "Les paramètres ont été importés avec succès!")
 
 
@@ -1625,7 +1624,7 @@ def on_delete_pressed(event):
     elif str(window.focus_get())[1:] == "para_listebox_eleve":
         suppr_eleve()
     elif str(window.focus_get())[1:] == "para_listebox_heure":
-        suppr_heure()
+        suppr_heure(dict_eleve,heure)
     elif title_label.place_info():
         supprimer()
 
