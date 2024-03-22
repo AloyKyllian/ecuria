@@ -182,7 +182,6 @@ def heure_precedant():
     """
 
     liste_heure = list(planning.liste_eleve)
-
     for i in range(1, len(liste_heure)):
         if liste_heure[i] == cellule.heure:
             cellule.set_heure(liste_heure[i-1])
@@ -1119,9 +1118,10 @@ def remplirlisteboxcheval(chevaux):
 
 
 def remplirlisteboxeleve():
-    para_listebox_eleve.delete(0, END)
-    for eleve in dict_eleve[parajour][heure]:
-        para_listebox_eleve.insert(END, eleve)
+    if heure != "":
+        para_listebox_eleve.delete(0, END)
+        for eleve in dict_eleve[parajour][heure]:
+            para_listebox_eleve.insert(END, eleve)
 
 
 def interface_default():
@@ -1181,7 +1181,15 @@ def interface_default():
     bouton_mail.place(x=1400, y=180)
 
     if parajour == jour.j and jour.j != '':
-        planning.set_liste_eleve(dict_eleve[jour.j])
+        temp_dict = {}
+        cle = list(dict_eleve[jour.j].keys())
+        if parajour != "Semaine":
+            cle = sorted(cle, key=cmp_heure)
+        elif parajour == "Semaine":
+            cle = sorted(cle, key=cmp_heure_semaine)
+        for heure in cle:
+            temp_dict[heure] = dict_eleve[jour.j][heure]
+        planning.set_liste_eleve(temp_dict)
         planning.set_cheval(dict_cheval[jour.j])
         ajoutcheval()
         ajouteleve()
@@ -1571,6 +1579,13 @@ def importer_param():
         err = True
         messagebox.showerror("Erreur", f"Erreur lors de l'importation des paramètres : {e}")
     if not err:        
+        liste_cheval = []
+        for chevali in dict_cheval[parajour]:
+            liste_cheval.append([dict_cheval[parajour][chevali][0],chevali])
+        remplirlisteboxcheval(liste_cheval)
+        remplirlisteboxeleve()
+        para_inserer_listebox(dict_eleve[parajour])
+        visualiser_fichier_cavalier(dict_eleve[parajour])
         messagebox.showinfo("importation de parametre", "Les paramètres ont été importés avec succès!")
 
 
@@ -1581,9 +1596,6 @@ def exporter_param():
         nom_zip = 'parametre.zip'
         chemin = zip_fichiers(path_parametre, nom_zip)
         erreur =envoyer_email(user, chemin,nom_zip,"exportation des parametres de la version "+str(version),mail)
-        if erreur != {}:
-            msgbox = tk.messagebox.showerror(
-            title="envoie des parametre par mail", message=erreur)
     except Exception as e:
         err = True
         messagebox.showerror("Erreur", f"Erreur lors de l'exportation des paramètres : {e}")
@@ -1994,11 +2006,6 @@ def ecrire_mail():
     err=False
     try:
         erreur = envoyer_email(user,planning.name_fichier,nom_fichier[0],"envoie du planning du "+str(extract_date_from_filename(planning.name_fichier))[0:11],mail)
-        if erreur != {}:
-            msgbox = tk.messagebox.showerror(
-            title="envoie des parametre par mail", message=erreur)
-        else:
-            messagebox.showinfo("envoie du planning", "Le planning a été envoyé avec succès!")
     except Exception as e:
         err = True
         messagebox.showerror("Erreur", f"Erreur lors de l'envoie du planning : {e}")
