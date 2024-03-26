@@ -475,7 +475,6 @@ class Planning():
         """
         nbr = 0
         for i in self.planning:
-            print(i[1], cheval)
             if i[1] == cheval:
                 nbr = nbr+1
         return nbr

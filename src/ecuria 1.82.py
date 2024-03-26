@@ -33,11 +33,11 @@ path_semaine = path_parametre+ "Semaine.xlsx"
 
 
 def remplir_cheval(dict_chevaux):
+    dict_cheval_temp = {}
+    print("remplir_cheval    planning.planning",planning.planning)
     for cheval in dict_chevaux:
-        print(planning.planning)
-        print(cheval, planning.nb_heure(cheval))
-        dict_chevaux[cheval] = [dict_chevaux[cheval][0], planning.nb_heure(cheval)]
-    return dict_chevaux
+        dict_cheval_temp[cheval] = [dict_chevaux[cheval][0], planning.nb_heure(cheval)]
+    return dict_cheval_temp
     
 
 def get_personne():
@@ -84,18 +84,12 @@ def ecrire_excel_ref(jour):
     workbook = Workbook()
     sheet = workbook.active
     
-    print(dict_cheval[jour])
+    print("ecrire_excel_ref    dict_cheval[jour] ",dict_cheval[jour])
     liste_cheval = list(dict_cheval[jour].keys())
-    data2 = dict_eleve[jour]
-    cle2 = list(data2.keys())
+    heure_trier = list(dict_eleve[jour].keys())
     
-    #tri des heures (a revoir pour les supprimer)
-    if jour != "Semaine":
-        cle2 = sorted(cle2, key=cmp_heure)
-    elif jour == "Semaine":
-        cle2 = sorted(cle2, key=cmp_heure_semaine)
     lignes = len(liste_cheval)+4
-    colonnes = len(cle2)+2
+    colonnes = len(heure_trier)+2
     
     dico_numeros = {
         1: 'A',
@@ -133,7 +127,6 @@ def ecrire_excel_ref(jour):
         ind_colonne = 0
         #mise en forme de la heuteur des lignes
         for colonne in range(1, colonnes):
-            print(colonne)
             #mise en forme des cellules
             sheet.cell(ligne, colonne).font = Font(size=taille_police)
             sheet.cell(ligne, colonne).alignment = Alignment(horizontal='center', vertical='center')
@@ -144,7 +137,7 @@ def ecrire_excel_ref(jour):
                 sheet.column_dimensions[dico_numeros[colonne]].width = taillecellule
                 if colonne != 1:
                     #ajout des heures
-                    sheet.cell(ligne, colonne).value = cle2[ind_colonne]
+                    sheet.cell(ligne, colonne).value = heure_trier[ind_colonne]
                     ind_colonne+=1
                 if colonne % 2 == 0:
                     #creation des heures vertes
@@ -269,6 +262,7 @@ def ajouter():
             title="creation de fichier", message="Ne peux etre ajouter car ce cheval travaille deja 4 heure dans la journée")
     elif err == -5:
         print(f"Erreur numéro {err}, ajout annulé.")
+        pass
 
 
 def supprimer():
@@ -427,15 +421,11 @@ def inserer_listbox(i):
     Returns:
         Aucun.
     """
-    print(i)
     if i[1] == -1:
-        i = i[0]
-    eleve_listbox.insert(tk.END, i)
-    print(i)
-    if len(i) == 2:
-        i = i[0]
-    # if int(i[1]) <= 10 and int(i[1]) >= 0:
-    #     i = i[0]
+        eleve_listbox.insert(tk.END, i[0])
+    else:
+        eleve_listbox.insert(tk.END, i)
+    i = i[0]
     if len(planning.planning) != 0:
         present = any((cellule.heure, i) == (tup[0], tup[2])
                       for tup in planning.planning)
@@ -502,6 +492,7 @@ def ajoutcheval():
         cheval_listbox.insert(tk.END, (planning.cheval[i][1], i))
     if cellule.heure != "heure" and cellule.heure in planning.liste_heure:
         colorier()
+        colorier_chevaux()
 
 
 def colorier():
@@ -671,15 +662,13 @@ def recupperation_excel(name):
     dict_cheval = {}
     heure_temp = {}
     Nb = 0
-    print(len(sheet["A"]))
     for i in range(3, len(sheet["A"])+1):
-        print(i,str(sheet.cell(row=i, column=1).value).strip())
         for j in list(range(1, len(sheet[3])+1))[::-1]:
             valeur_case = str(sheet.cell(row=i, column=j).value).strip()
             
             if valeur_case != 'None':
                 if i == 3:
-                    dict_heure[valeur_case] = j
+                    dict_heure[valeur_case.upper()] = j
                     heure_temp[j] = valeur_case
                 elif j == 1:
                     dict_cheval[valeur_case] = [Nb,i]
@@ -690,7 +679,6 @@ def recupperation_excel(name):
                         (sheet.cell(row=3, column=j).value.strip(), sheet.cell(row=i, column=1).value.strip(), valeur_case))
                 elif j>1 and str(sheet.cell(row=i, column=1).value).strip() == "theme" :
                     planning_theme[heure_temp[j].upper()] = valeur_case
-                    print(i,j,heure_temp[j],valeur_case)
     return liste, dict_cheval, dict_heure,planning_theme
 
 def sort_files_by_date(files):
@@ -749,7 +737,7 @@ def recup_donne():
     planning.liste_heure.clear()
 
     planning.set_liste_eleve(dict_eleve[jour.j])
-    print(planning.liste_eleve)
+    print("recup_donne    planning.liste_eleve",planning.liste_eleve)
     varjour.set(jour.j)
     
     planning.set_nom_fichier(path)
@@ -759,7 +747,6 @@ def recup_donne():
     planning.set_heure(heure)
     planning.set_planning(dict_planning)
     planning.set_cheval(remplir_cheval(dict_cheval[jour.j]))
-    ajoutcheval()
     affichage_txt(jour, planning)
     
     liste = []
@@ -798,6 +785,7 @@ def recup_donne():
         title="Création de fichier", message="Tous les fichiers ont été récupérés")
     remplir_listbox_heure()
     liste_heure = list(planning.liste_eleve.keys())
+    ajoutcheval()
     changement_heure(liste_heure[0])
 
 def ecrire_fichier():
@@ -834,16 +822,10 @@ def ecrire_fichier():
     
     print(dict_cheval[jour.j])
     liste_cheval = list(dict_cheval[jour.j].keys())
-    data2 = dict_eleve[jour.j]
-    cle2 = list(data2.keys())
-    
-    if jour.j != "Semaine":
-        cle2 = sorted(cle2, key=cmp_heure)
-    elif jour.j == "Semaine":
-        cle2 = sorted(cle2, key=cmp_heure_semaine)
-    
+    heure_trier = list(dict_eleve[jour.j].keys())
+
     lignes = len(liste_cheval)+4
-    colonnes = len(cle2)+2
+    colonnes = len(heure_trier)+2
 
     dico_numeros = {
         1: 'A',
@@ -890,7 +872,7 @@ def ecrire_fichier():
                 sheet.column_dimensions[dico_numeros[colonne]].width = taillecellule
                 if colonne != 1:
                     #ajout des heures
-                    sheet.cell(ligne, colonne).value = cle2[ind_colonne]
+                    sheet.cell(ligne, colonne).value = heure_trier[ind_colonne]
                     ind_colonne+=1
                 if colonne % 2 == 0:
                     #creation des heures vertes
@@ -905,30 +887,26 @@ def ecrire_fichier():
                     #ajout des chevaux
                     sheet.cell(ligne, colonne).value = liste_cheval[ind_ligne]
                     ind_ligne+=1
-
+    print("ecrire_fichier    plannning.liste_heure",planning.liste_heure)
     dict_heure = {}
     Nb = 0
-    for i in cle2:
-        dict_heure[i] = Nb+2
+    for heure in heure_trier:
+        dict_heure[heure] = Nb+2
         Nb += 1
     planning.set_heure(dict_heure)
-
-    for i in planning.planning:
-        if i[1] in planning.cheval and i[0] in planning.liste_heure:
-            # if sheet.cell(planning.cheval[i[1]][1], planning.liste_heure[i[0]]).value == None:
-            sheet.cell(planning.cheval[i[1]][0]+4,
-                       planning.liste_heure[i[0]]).value = i[2]
-    for i in planning_theme:
-        sheet.cell(len(liste_cheval)+4, dict_heure[i]).value = planning_theme[i]
-        # sheet.cell(len(liste_cheval)+4, dict_heure[i]).font = Font(size=taille_police)
+    print("ecrire_fichier    plannning.liste_heure",planning.liste_heure)
+    for cellule in planning.planning:
+        if cellule[1] in planning.cheval and cellule[0] in planning.liste_heure:
+            sheet.cell(planning.cheval[cellule[1]][0]+4,
+                       planning.liste_heure[cellule[0]]).value = cellule[2]
+    for heure in planning_theme:
+        sheet.cell(len(liste_cheval)+4, dict_heure[heure]).value = planning_theme[heure]
     sheet.cell(len(liste_cheval)+4, 1).value = "theme"
-    # sheet.cell(len(liste_cheval)+4, 1).font = Font(size=taille_police)
 
     err = workbook.save(planning.name_fichier)
     if err == None:
         label_enregistrer.config(fg="#ffffff")
         cavalier = lire_fichier_cavalier(jour.j)
-        # print(cavalier)
         fichier = open(path_parametre+"liste_cavalier_" + jour.j + ".txt", "w")
         fichier.write(ecrire_fichier_cavalier(cavalier,carte=True))
         fichier.close()
@@ -936,10 +914,20 @@ def ecrire_fichier():
 
 def add_heure():
     global dict_eleve
-    # if para_input_heure.get().upper() not in dict_eleve[parajour] and ("K" in para_input_heure.get().upper() or "L" in para_input_heure.get().upper()) :
     try:
+        #ajout de l'heure dans le dictionnaire
         dict_eleve[parajour][para_input_heure.get().upper()] = []
+        #tri des heures
+        heure_trier = tri_heure(dict_eleve[parajour], parajour)
+        #creation d'un dictionnaire temporaire afin d'appliquer le tri a dict_eleve
+        dictionnaire_eleve = {}
+        for heure in heure_trier:
+            dictionnaire_eleve[heure] = dict_eleve[parajour][heure]
+        dict_eleve[parajour] = dictionnaire_eleve.copy()
+        del dictionnaire_eleve
+        #mise a jour de la listebox des heures
         para_inserer_listebox(dict_eleve[parajour])
+        #mise a jour de l'affichage
         visualiser_fichier_cavalier(dict_eleve[parajour])
     except:
         messagebox.showerror(
@@ -1028,25 +1016,14 @@ def suppr_eleve():
     remplirlisteboxeleve()
     visualiser_fichier_cavalier(dict_eleve[parajour])
         
-def ecrire_fichier_cavalier(liste_eleve={},carte =False):
+def ecrire_fichier_cavalier(liste_eleve,carte =False):
     txt = ""
-    if liste_eleve == {}:
-        cle = list(planning.liste_eleve.keys())
-        eleves = planning.liste_eleve
-        if jour.j != "semaine":
-            cle = sorted(cle, key=cmp_heure)
-        elif jour.j == "semaine":
-            cle = sorted(cle, key=cmp_heure_semaine)
-    else:
-        cle = list(liste_eleve.keys())
-        eleves = liste_eleve
-        if parajour != "Semaine":
-            cle = sorted(cle, key=cmp_heure)
-        elif parajour == "Semaine":
-            cle = sorted(cle, key=cmp_heure_semaine)
 
-    print("cle",cle)
-    for heure in cle:
+    heure_trier = list(liste_eleve.keys())
+    eleves = liste_eleve
+
+    print("ecrire_fichier_cavalier  heure_trier",heure_trier)
+    for heure in heure_trier:
         ind=0
         for eleve in eleves[heure]:
             if carte and eleve[1] != -1:
@@ -1066,7 +1043,7 @@ def ecrire_fichier_cheval(dict_chevaux):
         liste_cheval.append([dict_chevaux[cheval][0],cheval])
     txt = ""
     for cheval in liste_cheval:
-        txt += str(cheval[0]) + '\t' + cheval[1] + "\r"
+        txt += cheval[1] + "\r"
     return txt
 
 def para_enregistrer():
@@ -1091,7 +1068,6 @@ def para_enregistrer():
             fichier = open(path_cheval_semaine, "w")
             fichier.write(ecrire_fichier_cheval(dict_cheval[parajour]))
             fichier.close()
-        # dict_eleve, dict_cheval = lire_parametre()
         visualiser_fichier_cavalier(dict_eleve[parajour])
         print("enregistrer excel ref")
         ecrire_excel_ref("Mercredi")
@@ -1119,6 +1095,15 @@ def remplirlisteboxeleve():
         for eleve in dict_eleve[parajour][heure]:
             para_listebox_eleve.insert(END, eleve)
 
+
+def tri_heure(dictionnaire_eleve, jour):
+    liste_heure_non_trier = list(dictionnaire_eleve.keys())
+    print("interface_default liste_heure_non_trier",liste_heure_non_trier)
+    if jour != "Semaine":
+        liste_heure_trier = sorted(liste_heure_non_trier, key=cmp_heure)
+    elif jour == "Semaine":
+        liste_heure_trier = sorted(liste_heure_non_trier, key=cmp_heure_semaine)
+    return liste_heure_trier
 
 def interface_default():
     global parajour
@@ -1177,18 +1162,8 @@ def interface_default():
     bouton_mail.place(x=1400, y=180)
 
     if jour.j != '':
-        temp_dict = {}
-        cle = list(dict_eleve[jour.j].keys())
-        print("interface_default cle",cle)
-        if parajour != "Semaine":
-            cle = sorted(cle, key=cmp_heure)
-        elif parajour == "Semaine":
-            cle = sorted(cle, key=cmp_heure_semaine)
-        for heure in cle:
-            temp_dict[heure] = dict_eleve[jour.j][heure]
-        
-        planning.set_liste_eleve(temp_dict)
-        planning.set_cheval(dict_cheval[jour.j])
+        planning.set_liste_eleve(dict_eleve[jour.j])
+        planning.set_cheval(remplir_cheval(dict_cheval[jour.j]))
         ajoutcheval()
         ajouteleve()
         
@@ -1247,13 +1222,17 @@ def lire_fichier_chevaux(path):
     lignes = fichier.read()
     fichier.close()
     lignes = lignes.split("\n")
+    i=0
     for ligne in lignes:
         if ligne != '':
             if ligne[2] == '\t':
                 cheval = ligne[3:].strip()
-            else:
+            elif ligne[1] == '\t':
                 cheval = ligne[2:].strip()
-            liste[cheval] = ([int(ligne[:2]), planning.nb_heure(cheval)])
+            else:
+                cheval = ligne.strip()
+            liste[cheval] = ([i, planning.nb_heure(cheval)])
+            i+=1
     return liste
 
 def lire_fichier_cavalier(jour):
@@ -1277,13 +1256,9 @@ def lire_fichier_cavalier(jour):
 
 
 def para_inserer_listebox(data):
-    cle = list(data.keys())
-    if parajour != "Semaine":
-        cle = sorted(cle, key=cmp_heure)
-    elif parajour == "Semaine":
-        cle = sorted(cle, key=cmp_heure_semaine)
+    heure_trier = list(data.keys())
     para_listebox_heure.delete(0, END)
-    for i in cle:
+    for i in heure_trier:
         para_listebox_heure.insert(END, i)
 
 
@@ -1296,13 +1271,9 @@ def mode_default():
 
 
 def visualiser_fichier_cavalier(data):
-    cle = list(data.keys())
-    if parajour != "Semaine":
-        cle = sorted(cle, key=cmp_heure)
-    elif parajour == "Semaine":
-        cle = sorted(cle, key=cmp_heure_semaine)
+    heure_trier = list(data.keys())
     txt = ""
-    for heure in cle:
+    for heure in heure_trier:
         for eleve in data[heure]:
             txt += eleve[0]+"/"+ str(eleve[1]) + "\r\n"
         txt += "\\heure/" + heure + "\r\n"
@@ -1646,7 +1617,7 @@ planning = Planning()  # Création d'une instance de la classe Planning
 jour = Jour()  # Création d'une instance de la classe Jour
 dict_eleve, dict_cheval = lire_parametre()
 
-version = 1.81  # Version actuelle du programme
+version = 1.82  # Version actuelle du programme
 user = get_personne()
 print(user)
 mail = get_mail()
@@ -1762,9 +1733,9 @@ def correction():
         unesessionmoins(cellule.eleve,cellule.heure)
 
 
-    data2 = dict_eleve[jour.j]
-    cle2 = list(data2.keys())
-    colonnes = len(cle2)+2
+
+    heure_non_trier = list(dict_eleve[jour.j].keys())
+    colonnes = len(heure_non_trier)+2
 
     if cellule.heure not in planning.liste_heure:
         planning.set_liste_eleve(dict_eleve[jour.j])
@@ -1796,9 +1767,8 @@ def absent():
             err = False
     if not err:
         print(planning.ancien_planning)
-        data2 = dict_eleve[jour.j]
-        cle2 = list(data2.keys())
-        colonnes = len(cle2)+2
+        heure_non_trier = list(dict_eleve[jour.j].keys())
+        colonnes = len(heure_non_trier)+2
         print("dercheval",dernier_cheval)
         if elevecarte == True:
             unesessionplus(cellule.eleve,cellule.heure)
