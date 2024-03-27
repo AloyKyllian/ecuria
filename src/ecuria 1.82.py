@@ -816,7 +816,8 @@ def ecrire_fichier():
     taille_police = feuille.cell(4, 2).font.size
 
     print(largeur,hauteur)
-    wb.save(jour.j+'.xlsx')
+    wb.close()
+    # wb.save(jour.j+'.xlsx')
     workbook = Workbook()
     sheet = workbook.active
     
@@ -945,7 +946,7 @@ def add_eleve():
         nb_carte = -1
         if v.get() == 1:
             nb_carte = para_nbcarte.get()
-        dict_eleve[parajour][heure].append((para_input_eleve.get().upper().strip(),nb_carte))
+        dict_eleve[parajour][heure].append([para_input_eleve.get().upper().strip(),int(nb_carte)])
         remplirlisteboxeleve()
         visualiser_fichier_cavalier(dict_eleve[parajour])
     except:
@@ -979,11 +980,13 @@ def add_cheval():
                         para_input_chevaux.get().upper()])
         liste_cheval.sort()
         print(liste_cheval)
+        dict_cheval_temp = {}
         for i in liste_cheval:
             if i[1] in dict_cheval[parajour]:
-                dict_cheval[parajour][i[1]] = [i[0], dict_cheval[parajour][i[1]][1]]
+                dict_cheval_temp[i[1]] = [i[0], dict_cheval[parajour][i[1]][1]]
             else:
-                dict_cheval[parajour][i[1]] = [i[0], planning.nb_heure(i[1])]
+                dict_cheval_temp[i[1]] = [i[0], planning.nb_heure(i[1])]
+        dict_cheval[parajour] = dict_cheval_temp
         remplirlisteboxcheval(liste_cheval)
 
 def suppr_cheval():
@@ -1111,55 +1114,54 @@ def interface_default():
         widget.place_forget()
 
     image_label.destroy()
-
-    label_jour.place(x=133, y=140)
-    label_heure.place(x=183, y=140)
-    title_label.place(x=60, y=35)
-    boutton_avancer_heure.place(x=65, y=140)
-    boutton_reculer_heure.place(x=260, y=140)
-    label_cavalier.place(x=460, y=70)
-    label_cavalier2.place(x=460, y=100)
-    label_cavalier3.place(x=650, y=100)
-    label_cavalier6.place(x=460, y=150)
-    label_cavalier4.place(x=650, y=150)
-    label_cavalier7.place(x=460, y=200)
-    label_cavalier5.place(x=650, y=200)
-    boutton_absent.place(x=755, y=100)
-    boutton_correction.place(x=810, y=100)
-    eleve_listbox.place(x=133, y=160)
-    eleve_rattrapage.place(x=133, y=360)
-    label_eleve_rattrapage.place(x=137, y=330)
-    boutton_eleve_rattrapage.place(x=160, y=390)
-    cheval_listbox.place(x=330, y=35)
-    visu_fichier.place(x=900, y=400)
-    label_visu_fichier.place(x=900, y=370)
-    label_ajout.place(x=460, y=400)
-    boutton_ajouter.place(x=570, y=480)
-    boutton_supprimer.place(x=670, y=480)
-    boutton_enregistrer.place(x=570, y=530)
-    label_enregistrer.place(x=560, y=585)
-    label_heure_cheval.place(x=460, y=250)
-    heure_listebox.place(x=460, y=280)
-    historique.place(x=900, y=70)
-    label_historique.place(x=900, y=40)
-    label_user.place(x=60, y=70)
-    listeCombo.place(x=65, y=100)
-    image1.place(x=535, y=606)
-    image2.place(x=70, y=606)
-    image3.place(x=680, y=220)
-    bouton_ouvrir_excel.place(x=1400, y=60)
-    bouton_rafraichir.place(x=1400, y=100)
     
-    label_theme.place(x=133, y=440)
-    theme_entry.place(x=133, y=470)
-    boutton_theme.place(x=140, y=500)
-    label_theme_actuelle.place(x=160, y=530)
-    label_theme_avant1.place(x=650, y=125)
-    label_theme_avant2.place(x=650, y=175)
-    label_theme_avant3.place(x=650, y=225)
-    
-    bouton_word.place(x=1400, y=140)
-    bouton_mail.place(x=1400, y=180)
+    # Réajuster les placements en utilisant les nouvelles proportions
+    label_jour.place(x=int(240 * proportion_x), y=int(70 * proportion_y))
+    label_heure.place(x=int(150 * proportion_x), y=int(145 * proportion_y))
+    title_label.place(x=int(60 * proportion_x), y=int(35 * proportion_y))
+    boutton_avancer_heure.place(x=int(65 * proportion_x), y=int(140 * proportion_y))
+    boutton_reculer_heure.place(x=int(260 * proportion_x), y=int(140 * proportion_y))
+    label_cavalier.place(x=int(470 * proportion_x), y=int(70 * proportion_y))
+    label_cavalier2.place(x=int(470 * proportion_x), y=int(100 * proportion_y))
+    label_cavalier3.place(x=int(650 * proportion_x), y=int(100 * proportion_y))
+    label_cavalier6.place(x=int(470 * proportion_x), y=int(150 * proportion_y))
+    label_cavalier4.place(x=int(650 * proportion_x), y=int(150 * proportion_y))
+    label_cavalier7.place(x=int(470 * proportion_x), y=int(200 * proportion_y))
+    label_cavalier5.place(x=int(650 * proportion_x), y=int(200 * proportion_y))
+    boutton_absent.place(x=int(755 * proportion_x), y=int(100 * proportion_y))
+    boutton_correction.place(x=int(810 * proportion_x), y=int(100 * proportion_y))
+    eleve_listbox.place(x=int(133 * proportion_x), y=int(170 * proportion_y))
+    eleve_rattrapage.place(x=int(133 * proportion_x), y=int(390 * proportion_y))
+    label_eleve_rattrapage.place(x=int(137 * proportion_x), y=int(360 * proportion_y))
+    boutton_eleve_rattrapage.place(x=int(160 * proportion_x), y=int(420 * proportion_y))
+    cheval_listbox.place(x=int(330 * proportion_x), y=int(35 * proportion_y))
+    visu_fichier.place(x=int(900 * proportion_x), y=int(395 * proportion_y))
+    label_visu_fichier.place(x=int(900 * proportion_x), y=int(365 * proportion_y))
+    label_ajout.place(x=int(470 * proportion_x), y=int(400 * proportion_y))
+    boutton_ajouter.place(x=int(570 * proportion_x), y=int(480 * proportion_y))
+    boutton_supprimer.place(x=int(670 * proportion_x), y=int(480 * proportion_y))
+    boutton_enregistrer.place(x=int(570 * proportion_x), y=int(530 * proportion_y))
+    label_enregistrer.place(x=int(560 * proportion_x), y=int(585 * proportion_y))
+    label_heure_cheval.place(x=int(470 * proportion_x), y=int(250 * proportion_y))
+    heure_listebox.place(x=int(470 * proportion_x), y=int(280 * proportion_y))
+    historique.place(x=int(900 * proportion_x), y=int(70 * proportion_y))
+    label_historique.place(x=int(900 * proportion_x), y=int(40 * proportion_y))
+    label_user.place(x=int(60 * proportion_x), y=int(70 * proportion_y))
+    listeCombo.place(x=int(65 * proportion_x), y=int(100 * proportion_y))
+    image1.place(x=int(535 * proportion_x), y=int(606 * proportion_y))
+    image2.place(x=int(70 * proportion_x), y=int(600 * proportion_y))
+    image3.place(x=int(680 * proportion_x), y=int(220 * proportion_y))
+    bouton_ouvrir_excel.place(x=int(1400 * proportion_x), y=int(60 * proportion_y))
+    bouton_rafraichir.place(x=int(1400 * proportion_x), y=int(100 * proportion_y))
+    label_theme.place(x=int(133 * proportion_x), y=int(460 * proportion_y))
+    theme_entry.place(x=int(133 * proportion_x), y=int(490 * proportion_y))
+    boutton_theme.place(x=int(140 * proportion_x), y=int(520 * proportion_y))
+    label_theme_actuelle.place(x=int(160 * proportion_x), y=int(550 * proportion_y))
+    label_theme_avant1.place(x=int(650 * proportion_x), y=int(125 * proportion_y))
+    label_theme_avant2.place(x=int(650 * proportion_x), y=int(175 * proportion_y))
+    label_theme_avant3.place(x=int(650 * proportion_x), y=int(225 * proportion_y))
+    bouton_word.place(x=int(1400 * proportion_x), y=int(140 * proportion_y))
+    bouton_mail.place(x=int(1400 * proportion_x), y=int(180 * proportion_y))
 
     if jour.j != '':
         planning.set_liste_eleve(dict_eleve[jour.j])
@@ -1180,40 +1182,39 @@ def interface_paramete():
 
     image_label.destroy()
 
+    # Réajustement pour les autres widgets...
     para_image1.place(relx=0.48, rely=0.6, anchor=tk.CENTER)
-    para_visu_fichier.place(x=900, y=400)
-    para_listebox_heure.place(x=400, y=70)
-    para_listebox_eleve.place(x=730, y=70)
-    para_listeCombo.place(x=65, y=40)
-    para_listeCombo_user.place(x=170, y=40)
-    para_input_heure.place(x=560, y=140)
-    para_add_heure.place(x=560, y=170)
-    para_suppr_heure.place(x=560, y=200)
-    para_input_eleve.place(x=890, y=140)
-    para_add_eleve.place(x=890, y=170)
-    para_suppr_eleve.place(x=890, y=200)
-    para_boutton_enregistrer.place(x=635, y=680)
-    para_listebox_chevaux.place(x=60, y=70)
-    para_input_chevaux.place(x=220, y=140)
-    para_add_chevaux.place(x=220, y=170)
-    para_suppr_chevaux.place(x=220, y=200)
-    para_input_ind_chevaux.place(x=360, y=140)
-    para_case.place(x=890, y=230)
-    para_nbcarte.place(x=890, y=260)
-    image3.place(x=170, y=500)
+    para_visu_fichier.place(x=int(900 * proportion_x), y=int(395 * proportion_y))
+    para_listebox_heure.place(x=int(400 * proportion_x), y=int(70 * proportion_y))
+    para_listebox_eleve.place(x=int(730 * proportion_x), y=int(70 * proportion_y))
+    para_listeCombo.place(x=int(65 * proportion_x), y=int(40 * proportion_y))
+    para_listeCombo_user.place(x=int(170 * proportion_x), y=int(40 * proportion_y))
+    para_input_heure.place(x=int(560 * proportion_x), y=int(140 * proportion_y))
+    para_add_heure.place(x=int(560 * proportion_x), y=int(170 * proportion_y))
+    para_suppr_heure.place(x=int(560 * proportion_x), y=int(200 * proportion_y))
+    para_input_eleve.place(x=int(890 * proportion_x), y=int(140 * proportion_y))
+    para_add_eleve.place(x=int(890 * proportion_x), y=int(170 * proportion_y))
+    para_suppr_eleve.place(x=int(890 * proportion_x), y=int(200 * proportion_y))
+    para_boutton_enregistrer.place(x=int(635 * proportion_x), y=int(680 * proportion_y))
+    para_listebox_chevaux.place(x=int(60 * proportion_x), y=int(70 * proportion_y))
+    para_input_chevaux.place(x=int(220 * proportion_x), y=int(140 * proportion_y))
+    para_add_chevaux.place(x=int(220 * proportion_x), y=int(170 * proportion_y))
+    para_suppr_chevaux.place(x=int(220 * proportion_x), y=int(200 * proportion_y))
+    para_input_ind_chevaux.place(x=int(360 * proportion_x), y=int(140 * proportion_y))
+    para_case.place(x=int(890 * proportion_x), y=int(230 * proportion_y))
+    para_nbcarte.place(x=int(890 * proportion_x), y=int(260 * proportion_y))
+    image3.place(x=int(170 * proportion_x), y=int(500 * proportion_y))
+    image4.place(x=int(1070 * proportion_x), y=int(70 * proportion_y))
+    
+    posymail = 290 * proportion_y
+    para_label_mail_karine.place(x=int(730 * proportion_x), y=int(posymail))
+    para_entry_karine.place(x=int(820 * proportion_x), y=int(posymail))
+    para_label_mail_lena.place(x=int(730 * proportion_x), y=int(posymail + 30))
+    para_entry_lena.place(x=int(820 * proportion_x), y=int(posymail + 30))
+    para_bouton_importer_param.place(x=int(1300 * proportion_x), y=int(290 * proportion_y))
+    para_bouton_exporter_param.place(x=int(1300 * proportion_x), y=int(325 * proportion_y))
+    para_bouton_ouvrir_excel.place(x=int(1295 * proportion_x), y=int(360 * proportion_y))
 
-    image4.place(x=1070, y=70)
-    
-    posymail = 290
-    para_label_mail_karine.place(x=730, y=posymail)
-    para_entry_karine.place(x=820, y=posymail)
-    para_label_mail_lena.place(x=730, y=posymail+30)
-    para_entry_lena.place(x=820, y=posymail+30)
-    
-    para_bouton_importer_param.place(x=1300,y=290)
-    para_bouton_exporter_param.place(x=1300,y=325)
-    para_bouton_ouvrir_excel.place(x=1295, y=360)
-    
 
 
 def lire_fichier_chevaux(path):
@@ -1626,7 +1627,13 @@ mail = get_mail()
 window = tk.Tk()  # Création de la fenêtre principale
 window.title("Planning")  # Titre de la fenêtre
 window.attributes('-fullscreen', True)  # Affichage en mode plein écran
-
+window.update()
+wx = window.winfo_width()
+wy = window.winfo_height()
+# Calculer les proportions pour la nouvelle taille de l'écran
+proportion_x = wx / 1536
+proportion_y = wy / 864
+print("taille de fenetre", wx, wy, proportion_x, proportion_y)
 window.bind("<Return>", on_enter_pressed)
 window.bind("<Right>", on_right_pressed)
 window.bind("<Left>", on_left_pressed)
@@ -1645,14 +1652,14 @@ image_label = add_centered_image(
     window, "0f382f680a13445c8e6484ecbbe2a2b5-transformed.png", 169*4, 166*4)
 
 para_image1 = image(
-    window, "image1.png", int(2388/5), int(1668/5))
-image1 = image(window, "image1.png", int(2388/8.5), int(1668/8.5))
-image2 = image(window, "image2.png", int(2388/8.5), int(1668/8.5))
-image3 = image(window, "image3.png", int(2388/8.5), int(1668/8.5))
-image4 = image(window, "image4.png", int(2388/7), int(1668/7))
+    window, "image1.png", int(2388/5*proportion_x), int(1668/5*proportion_y))
+image1 = image(window, "image1.png", int(2388/8.5*proportion_x ), int(1668/8.5*proportion_y))
+image2 = image(window, "image2.png", int(2388/8.5*proportion_x), int(1668/8.5*proportion_y))
+image3 = image(window, "image3.png", int(2388/8.5*proportion_x), int(1668/8.5*proportion_y))
+image4 = image(window, "image4.png", int(2388/7*proportion_x), int(1668/7))
 
 label_version = tk.Label(window, text="Version " + str(version), bg='#b4b4b4')
-label_version.place(x=1400, y=785)
+label_version.place(x=int(1395*proportion_x), y=int(780*proportion_y))
 
 # Définition des variables de contrôle
 varheure = StringVar()
@@ -1674,15 +1681,15 @@ v = IntVar ()
 user_var = StringVar()
 user_var.set(user)
 
-label_jour = tk.Label(window, textvariable=varjour, bg='#b4b4b4')
+label_jour = tk.Label(window, textvariable=varjour, bg='#b4b4b4',font=("Comic Sans MS", int(15*proportion_x)))
 
 label_heure = tk.Label(window, textvariable=varheure, bg='#b4b4b4')
 
-label_user = tk.Label(window, textvariable=user_var,font=("Comic Sans MS", 15), bg='#b4b4b4')
+label_user = tk.Label(window, textvariable=user_var,font=("Comic Sans MS", int(15*proportion_x)), bg='#b4b4b4')
 
 # Création d'une étiquette pour le titre
 title_label = tk.Label(
-    window, text="GESTION PLANNING", font=("Comic Sans MS", 17), bg='#b4b4b4')
+    window, text="GESTION PLANNING", font=("Comic Sans MS", int(17*proportion_x)), bg='#b4b4b4')
 
 # Boutons pour avancer et reculer dans les heures
 boutton_avancer_heure = tk.Button(
@@ -1693,24 +1700,24 @@ boutton_reculer_heure = tk.Button(
 
 # Étiquettes pour afficher les informations du cavalier
 label_cavalier = tk.Label(
-    window, text="INFOS CAVALIER", font=("Corbel", 14), bg='#8abd45')
+    window, text="INFOS CAVALIER", font=("Corbel", int(14*proportion_x)), bg='#8abd45')
 
 label_cavalier2 = tk.Label(
-    window, textvariable=varsemaine1, font=("Corbel", 13), bg='#b4b4b4')
+    window, textvariable=varsemaine1, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
 
 label_cavalier3 = tk.Label(
-    window, textvariable=varcavalier, font=("Corbel", 13), bg='#b4b4b4')
+    window, textvariable=varcavalier, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
 
 label_cavalier6 = tk.Label(
-    window, textvariable=varsemaine2, font=("Corbel", 13), bg='#b4b4b4')
+    window, textvariable=varsemaine2, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
 
 label_cavalier4 = tk.Label(
-    window, textvariable=varcavalier1, font=("Corbel", 13), bg='#b4b4b4')
+    window, textvariable=varcavalier1, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
 
 label_cavalier7 = tk.Label(
-    window, textvariable=varsemaine3, font=("Corbel", 13), bg='#b4b4b4')
+    window, textvariable=varsemaine3, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
 label_cavalier5 = tk.Label(
-    window, textvariable=varcavalier2, font=("Corbel", 13), bg='#b4b4b4')
+    window, textvariable=varcavalier2, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
 
 
 
@@ -1792,7 +1799,7 @@ def absent():
 dernier_cheval = ""
 
 boutton_absent = tk.Button(
-    window, bg='#8abd45', height=1, width=4, text="ABS", command=absent, borderwidth=2)
+    window, bg='#8abd45', height=1, width=int(4*proportion_x), text="ABS", command=absent, borderwidth=2)
 boutton_correction = tk.Button(
     window, bg='#8abd45', height=1, text="correction", command=correction)
 # Initialisation des variables de contrôle
@@ -1807,24 +1814,24 @@ eleve_rattrapage = tk.Entry(window)
 
 
 label_eleve_rattrapage = tk.Label(
-    window, text="Ajouter un nom", font=("Corbel", 13), bg='#b4b4b4')
+    window, text="Ajouter un nom", font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
 boutton_eleve_rattrapage = tk.Button(
-    window, width=8, bg='#8abd45', text="rattrapage", command=ajouter_rattrapage)
+    window, width=int(8*proportion_x), bg='#8abd45', text="rattrapage", command=ajouter_rattrapage)
 
 theme_entry = tk.Entry(window)
 
 label_theme = tk.Label(
-    window, text="Ajouter un theme", font=("Corbel", 13), bg='#b4b4b4')
+    window, text="Ajouter un theme", font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
 boutton_theme = tk.Button(
-    window, width=12, bg='#8abd45', text="ajout du theme", command=ajouter_theme)
+    window, width=int(14*proportion_x), bg='#8abd45', text="ajout du theme", command=ajouter_theme)
 label_theme_actuelle = tk.Label(
-    window, textvariable=theme, font=("Corbel", 13), bg='#b4b4b4')
+    window, textvariable=theme, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
 label_theme_avant1 = tk.Label(
-    window, textvariable=theme1, font=("Corbel", 13), bg='#b4b4b4')
+    window, textvariable=theme1, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
 label_theme_avant2 = tk.Label(
-    window, textvariable=theme2, font=("Corbel", 13), bg='#b4b4b4')
+    window, textvariable=theme2, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
 label_theme_avant3 = tk.Label(
-    window, textvariable=theme3, font=("Corbel", 13), bg='#b4b4b4')
+    window, textvariable=theme3, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
 theme1.set("theme1")
 theme2.set("theme2")
 theme3.set("theme3")
@@ -1842,7 +1849,7 @@ def items_selected(event):
         if isinstance(cellule.eleve[1], int):
             cellule.eleve = cellule.eleve[0]
             elevecarte = True
-            
+        print(cellule.eleve)
         ancient_cheval = planning.ancient_cheval_de(
                 cellule.eleve, cellule.heure)
 
@@ -1876,7 +1883,7 @@ def items_selected(event):
 eleve_listbox.bind('<<ListboxSelect>>', items_selected)
 
 # Liste déroulante pour les chevaux
-cheval_listbox = tk.Listbox(window,name="cheval_listbox", height=47)
+cheval_listbox = tk.Listbox(window,name="cheval_listbox", height=int(47*proportion_y))
 
 # Fonction appelée lorsqu'un élément est sélectionné dans la liste des chevaux
 
@@ -1896,26 +1903,26 @@ def items_selected_cheval(event):
 cheval_listbox.bind('<<ListboxSelect>>', items_selected_cheval)
 
 # Zone de texte pour afficher le planning
-visu_fichier = tk.Text(window, width=70)
+visu_fichier = tk.Text(window, width=int(70*proportion_x),height=int(24*proportion_y))
 visu_fichier.config(state='disabled')
 
 label_visu_fichier = tk.Label(
-    window, text="PREVISUALISATION", font=("Corbel", 14), bg='#8abd45')
+    window, text="PREVISUALISATION", font=("Corbel", int(14*proportion_x)), bg='#8abd45')
 
 
 # Étiquette pour afficher des informations sur l'ajout
 label_ajout = tk.Label(window, textvariable=varajout,
-                       font=20, bg='#ffffff')
+                       font=int(20*proportion_x), bg='#ffffff')
 
 
 # Bouton pour ajouter une entrée
 boutton_ajouter = tk.Button(
-    window, text="Ajouter", command=ajouter, width=11, height=2, bg='#8abd45')
+    window, text="Ajouter", command=ajouter, width=int(11*proportion_x), height=int(2*proportion_y), bg='#8abd45')
 
 
 # Bouton pour supprimer une entrée
 boutton_supprimer = tk.Button(
-    window, text="Supprimer", command=supprimer, width=11, height=2, bg='#8abd45')
+    window, text="Supprimer", command=supprimer, width=int(11*proportion_x), height=int(2*proportion_y), bg='#8abd45')
 
 
 # Bouton pour enregistrer les modifications
@@ -1925,16 +1932,16 @@ boutton_enregistrer = tk.Button(
 
 # Étiquette pour afficher un message après l'enregistrement
 label_enregistrer = tk.Label(
-    window, text="Le fichier a bien été enregistré", font=("Corbel", 13), bg='#b4b4b4')  # le fichier à bien été enregistré
+    window, text="Le fichier a bien été enregistré", font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')  # le fichier à bien été enregistré
 label_enregistrer.config(fg="#b4b4b4")
 
 # Étiquette pour afficher l'heure de travail du cheval
 label_heure_cheval = tk.Label(
-    window, textvariable=varheure_cheval, font=("Corbel", 13), bg='#8abd45')
+    window, textvariable=varheure_cheval, font=("Corbel", int(13*proportion_x)), bg='#8abd45')
 
 
 # Liste déroulante pour les heures de travail
-heure_listebox = tk.Listbox(window,name="heure_listebox", width=25, height=5)
+heure_listebox = tk.Listbox(window,name="heure_listebox", width=int(25*proportion_x), height=int(5*proportion_y))
 
 
 
@@ -2022,17 +2029,17 @@ heure_listebox.bind('<<ListboxSelect>>', items_selected_heure_cheval)
 
 # Étiquette pour afficher l'historique
 label_historique = tk.Label(
-    window, text="HISTORIQUE", font=("Corbel", 13), bg='#8abd45')
+    window, text="HISTORIQUE", font=("Corbel", int(13*proportion_x)), bg='#8abd45')
 
 # Zone de texte pour afficher l'historique
-historique = tk.Text(window, width=60, height=13)
+historique = tk.Text(window, width=int(60*proportion_x), height=int(13*proportion_y))
 historique.config(state='disabled')
 
 # Création du menu
 menubar = Menu(window)
 
 # Création d'une liste déroulante pour sélectionner l'heure
-listeCombo = ttk.Combobox(window, height=10, width=40)
+listeCombo = ttk.Combobox(window, height=int(10*proportion_y), width=int(40*proportion_x))
 
 
 # Fonction appelée lorsqu'un élément est sélectionné dans la liste déroulante
@@ -2072,18 +2079,18 @@ window.config(menu=menubar)
 
 # interface_paramete()
 
-para_visu_fichier = tk.Text(window, width=70)
+para_visu_fichier = tk.Text(window, width=int(70*proportion_x),height=int(24*proportion_y))
 para_visu_fichier.config(state='disabled')
 
 # Étiquette pour afficher l'historique
 para_label_historique = tk.Label(
-    window, text="historique", font=("Corbel", 13), bg='#b4b4b4')
+    window, text="historique", font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
 
 # Zone de texte pour afficher l'historique
-para_historique = tk.Text(window, width=60, height=13)
+para_historique = tk.Text(window, width=int(60*proportion_x), height=int(13*proportion_y))
 para_historique.config(state='disabled')
 
-para_listebox_heure = tk.Listbox(window,name="para_listebox_heure", width=25, height=45)
+para_listebox_heure = tk.Listbox(window,name="para_listebox_heure", width=int(25*proportion_x), height=int(45*proportion_y))
 
 heure = ""
 
@@ -2101,7 +2108,7 @@ def items_selected_heure(event):
 para_listebox_heure.bind('<<ListboxSelect>>', items_selected_heure)
 
 
-para_listebox_eleve = tk.Listbox(window,name="para_listebox_eleve", width=25, height=12)
+para_listebox_eleve = tk.Listbox(window,name="para_listebox_eleve", width=int(25*proportion_x), height=int(12*proportion_y))
 
 
 eleve = ""
@@ -2119,7 +2126,7 @@ def items_selected_eleve(event):
 para_listebox_eleve.bind('<<ListboxSelect>>', items_selected_eleve)
 
 
-para_listebox_chevaux = tk.Listbox(window,name="para_listebox_chevaux", width=25, height=45)
+para_listebox_chevaux = tk.Listbox(window,name="para_listebox_chevaux", width=int(25*proportion_x), height=int(45*proportion_y))
 
 cheval = ""
 
@@ -2136,10 +2143,10 @@ def items_selected_cheval(event):
 para_listebox_chevaux.bind('<<ListboxSelect>>', items_selected_cheval)
 
 # Création d'une liste déroulante pour sélectionner l'heure
-para_listeCombo = ttk.Combobox(window,width=10)
+para_listeCombo = ttk.Combobox(window,width=int(10*proportion_x))
 para_listeCombo['values'] = ["Mercredi", "Samedi","Semaine"]
 
-para_listeCombo_user = ttk.Combobox(window,width=10)
+para_listeCombo_user = ttk.Combobox(window,width=int(10*proportion_x))
 if user == "Lena":
     para_listeCombo_user['values'] = ["Lena", "Karine"]
 elif user == "Karine":
@@ -2162,28 +2169,28 @@ def action(event):
 para_input_chevaux = tk.Entry(window)
 para_input_ind_chevaux = tk.Entry(window, width=3)
 para_add_chevaux = tk.Button(
-    window, text="ajouter cheval", command=add_cheval, width=18, bg='#8abd45')
+    window, text="ajouter cheval", command=add_cheval, width=int(18*proportion_x), bg='#8abd45')
 para_suppr_chevaux = tk.Button(
-    window, text="supprimer cheval", command=suppr_cheval, width=18, bg='#8abd45')
+    window, text="supprimer cheval", command=suppr_cheval, width=int(18*proportion_x), bg='#8abd45')
 
 para_listeCombo.bind("<<ComboboxSelected>>", action)
 
 para_input_heure = tk.Entry(window)
 
 para_add_heure = tk.Button(
-    window, text="creer heure", command=add_heure, width=18, bg='#8abd45')
+    window, text="creer heure", command=add_heure, width=int(18*proportion_x), bg='#8abd45')
 
 para_suppr_heure = tk.Button(
-    window, text="supprimer heure", command=lambda:suppr_heure(dict_eleve,heure), width=18, bg='#8abd45')
+    window, text="supprimer heure", command=lambda:suppr_heure(dict_eleve,heure), width=int(18*proportion_x), bg='#8abd45')
 
 
 para_input_eleve = tk.Entry(window)
 
 para_add_eleve = tk.Button(
-    window, text="creer eleve", command=add_eleve, width=18, bg='#8abd45')
+    window, text="creer eleve", command=add_eleve, width=int(18*proportion_x), bg='#8abd45')
 
 para_suppr_eleve = tk.Button(
-    window, text="supprimer eleve", command=suppr_eleve, width=18, bg='#8abd45')
+    window, text="supprimer eleve", command=suppr_eleve, width=int(18*proportion_x), bg='#8abd45')
 
 para_boutton_enregistrer = tk.Button(
     window, text="ENREGISTRER", command=para_enregistrer, width=12, font=("Helvetica", 18, "bold"), bg='#000000', fg='#ffffff')
@@ -2205,12 +2212,12 @@ def sauvegarder_mail():
         
 
 para_label_mail_karine = tk.Label(window, text="mail karine", font=("Corbel", 13), bg='#b4b4b4')
-para_entry_karine = tk.Entry(window, width=25)
+para_entry_karine = tk.Entry(window, width=int(25*proportion_x))
 if len(mail) > 0:
     para_entry_karine.insert(0, mail[0])
 
 para_label_mail_lena = tk.Label(window, text="mail lena", font=("Corbel", 13), bg='#b4b4b4')
-para_entry_lena = tk.Entry(window, width=25)
+para_entry_lena = tk.Entry(window, width=int(25*proportion_x))
 if len(mail) > 1:
     para_entry_lena.insert(0, mail[1])
 
