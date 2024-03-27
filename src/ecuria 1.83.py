@@ -1618,7 +1618,7 @@ planning = Planning()  # Création d'une instance de la classe Planning
 jour = Jour()  # Création d'une instance de la classe Jour
 dict_eleve, dict_cheval = lire_parametre()
 
-version = 1.82  # Version actuelle du programme
+version = 1.83  # Version actuelle du programme
 user = get_personne()
 print(user)
 mail = get_mail()
