@@ -472,7 +472,6 @@ def ajoutuncheval(cheval, ind):
     cheval_listbox.delete(ind)
     cheval_listbox.insert(
         ind, (planning.cheval[cheval][1], cheval))
-    cheval_listbox.itemconfig(ind, {'bg': 'green'})
 
 
 def ajoutcheval():
@@ -513,18 +512,6 @@ def colorier():
     for i in range(0, len(planning.cheval)):
         cheval_listbox.itemconfig(
             i, {'bg': 'white'})
-    setcheval = set()
-    for i in planning.liste_eleve[cellule.heure]:
-        if len(i)==2:
-            ancient = planning.ancient_cheval_de(i[0], cellule.heure)
-        else:
-            ancient = planning.ancient_cheval_de(i, cellule.heure)
-        for y in ancient:
-            if y[1] != "":
-                setcheval.add(y[1])
-    for i in setcheval:
-        cheval_listbox.itemconfig(
-            i, {'bg': 'green'})
 
 
 def colorier_ancient_chevaux(ancient_cheval_eleve):
