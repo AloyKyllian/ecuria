@@ -806,90 +806,14 @@ def ecrire_fichier():
     """
     global planning_theme
 
-    wb = load_workbook(path_parametre+jour.j+'.xlsx')
+    workbook = load_workbook(path_parametre+jour.j+'.xlsx')
 
     # Accéder à la feuille de calcul souhaitée
-    feuille = wb.active
-
-    # Parcourir les lignes et les colonnes de la feuille de calcul
-
-    largeur = feuille.column_dimensions['B'].width
-    hauteur = feuille.row_dimensions[4].height
-    taille_police = feuille.cell(4, 2).font.size
-
-    print(largeur,hauteur)
-    wb.close()
-    # wb.save(jour.j+'.xlsx')
-    workbook = Workbook()
     sheet = workbook.active
-    
-    print(dict_cheval[jour.j])
+
     liste_cheval = list(dict_cheval[jour.j].keys())
     heure_trier = list(dict_eleve[jour.j].keys())
 
-    lignes = len(liste_cheval)+4
-    colonnes = len(heure_trier)+2
-
-    dico_numeros = {
-        1: 'A',
-        2: 'B',
-        3: 'C',
-        4: 'D',
-        5: 'E',
-        6: 'F',
-        7: 'G',
-        8: 'H',
-        9: 'I',
-        10: 'J',
-        11: 'K',
-        12: 'L',
-        13: 'M',
-        14: 'N',
-        15: 'O',
-        16: 'P',
-        17: 'Q',
-        18: 'R',
-        19: 'S',
-        20: 'T',
-        21: 'U',
-        22: 'V',
-        23: 'W',
-        24: 'X',
-        25: 'Y',
-        26: 'Z'
-    }
-    taillecellule = largeur
-    hauteurcellule = hauteur
-    double = Side(border_style="thin", color="000000")
-    ind_ligne = 0
-    for ligne in range(3, lignes):
-        ind_colonne = 0
-        for colonne in range(1, colonnes):
-            #mise en forme des cellules
-            sheet.cell(ligne, colonne).font = Font(size=taille_police)
-            sheet.cell(ligne, colonne).alignment = Alignment(horizontal='center', vertical='center')
-            sheet.cell(ligne, colonne).border = Border(left=double, top=double, right=double, bottom=double)
-            #mise en forme des heures
-            if ligne == 3 :
-                #mise en forme de la largeur des lignes
-                sheet.column_dimensions[dico_numeros[colonne]].width = taillecellule
-                if colonne != 1:
-                    #ajout des heures
-                    sheet.cell(ligne, colonne).value = heure_trier[ind_colonne]
-                    ind_colonne+=1
-                if colonne % 2 == 0:
-                    #creation des heures vertes
-                    sheet.cell(ligne, colonne).fill = PatternFill(start_color='70AD47', end_color='70AD47', fill_type='solid')
-            #creation des lignes vertes        
-            if ligne % 2 == 0:
-                sheet.cell(ligne, colonne).fill = PatternFill(start_color='A9D08E', end_color='A9D08E', fill_type='solid')
-            #mise en forme des chevaux
-            if colonne == 1 :
-                sheet.row_dimensions[ligne].height = hauteurcellule
-                if ligne != 3:
-                    #ajout des chevaux
-                    sheet.cell(ligne, colonne).value = liste_cheval[ind_ligne]
-                    ind_ligne+=1
     print("ecrire_fichier    plannning.liste_heure",planning.liste_heure)
     dict_heure = {}
     Nb = 0
@@ -988,7 +912,11 @@ def add_cheval():
                 dict_cheval_temp[i[1]] = [i[0], dict_cheval[parajour][i[1]][1]]
             else:
                 dict_cheval_temp[i[1]] = [i[0], planning.nb_heure(i[1])]
-        dict_cheval[parajour] = dict_cheval_temp
+        if parajour != "Semaine":
+            dict_cheval["Mercredi"] = dict_cheval_temp
+            dict_cheval["Samedi"] = dict_cheval_temp
+        else:
+            dict_cheval["Semaine"] = dict_cheval_temp
         remplirlisteboxcheval(liste_cheval)
 
 def suppr_cheval():
@@ -1006,7 +934,10 @@ def suppr_cheval():
         print(liste_cheval)
         for i in liste_cheval:
             dict_cheval[parajour][i[1]] = [i[0], dict_cheval[parajour][i[1]][1]]
-        del dict_cheval[parajour][cheval[1]]
+        if parajour != "Semaine":
+            del dict_cheval["Mercredi"][cheval[1]]
+        else:
+            del dict_cheval[parajour][cheval[1]]
         print(dict_cheval[parajour])
         remplirlisteboxcheval(liste_cheval)
     
@@ -1078,7 +1009,6 @@ def para_enregistrer():
         ecrire_excel_ref("Mercredi")
         ecrire_excel_ref("Samedi")
         ecrire_excel_ref("Semaine")
-        
         sauvegarder_mail()
             
     except Exception as e:
@@ -1523,8 +1453,8 @@ def image(root, image_path, width, height):
 def lire_parametre():
     
     dict_eleve = {"Semaine":lire_fichier_cavalier("semaine"), "Mercredi":lire_fichier_cavalier("mercredi"), "Samedi":lire_fichier_cavalier("samedi")}
-    dict_cheval = {"Semaine":lire_fichier_chevaux(path_cheval_semaine), "Mercredi":lire_fichier_chevaux(path_cheval), "Samedi":lire_fichier_chevaux(path_cheval)}
-
+    dict_cheval = {"Semaine":lire_fichier_chevaux(path_cheval_semaine), "Samedi":lire_fichier_chevaux(path_cheval)}
+    dict_cheval["Mercredi"] = dict_cheval["Samedi"]
     print("eleve : ",dict_eleve)
     print("\n\n\n\n")
     print("cheval : ",dict_cheval)
