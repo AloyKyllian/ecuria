@@ -204,7 +204,7 @@ def heure_suivant():
 
 
 def ajouter_rattrapage():
-    planning.liste_eleve[cellule.heure].append([eleve_rattrapage.get().upper(),-1])
+    planning.liste_eleve[cellule.heure].append([eleve_rattrapage.get().upper(),-2])
     ajouteleve()
     
 def ecrire_word():
@@ -330,7 +330,8 @@ def colorier_eleve(ind):
     Returns:
         Aucun.
     """
-    eleve_listbox.itemconfig(ind, {'bg': 'red'})
+    if ind in range(0, eleve_listbox.size()):
+        eleve_listbox.itemconfig(ind, {'bg': 'red'})
 
 
 def decolorier_eleve(ind):
@@ -346,7 +347,8 @@ def decolorier_eleve(ind):
     Returns:
         Aucun.
     """
-    eleve_listbox.itemconfig(ind, {'bg': 'white'})
+    if ind in range(0, eleve_listbox.size()):
+        eleve_listbox.itemconfig(ind, {'bg': 'white'})
 
 
 def ajout_historique(type, element):
@@ -736,7 +738,7 @@ def recup_donne():
     planning.cheval.clear()
     planning.liste_heure.clear()
 
-    planning.set_liste_eleve(dict_eleve[jour.j])
+    planning.set_liste_eleve(dict_eleve[jour.j].copy())
     print("recup_donne    planning.liste_eleve",planning.liste_eleve)
     varjour.set(jour.j)
     
@@ -1029,9 +1031,9 @@ def ecrire_fichier_cavalier(liste_eleve,carte =False):
     for heure in heure_trier:
         ind=0
         for eleve in eleves[heure]:
-            if carte and eleve[1] != -1:
+            if carte and ((eleve[1]>=0 and eleve[1] <= 10) or eleve[1] == -1):
                 txt += planning.liste_eleve[heure][ind][0]+"/"+ str(planning.liste_eleve[heure][ind][1]) + "\r"
-            else:
+            elif eleve[1] != -2:
                 txt += eleve[0]+"/"+ str(eleve[1]) + "\r"
             ind+=1
         txt += "\\heure/" + heure + "\r"
@@ -1164,8 +1166,8 @@ def interface_default():
     bouton_mail.place(x=int(1400 * proportion_x), y=int(180 * proportion_y))
 
     if jour.j != '':
-        planning.set_liste_eleve(dict_eleve[jour.j])
-        planning.set_cheval(remplir_cheval(dict_cheval[jour.j]))
+        planning.set_liste_eleve(dict_eleve[jour.j].copy())
+        planning.set_cheval(remplir_cheval(dict_cheval[jour.j].copy()))
         ajoutcheval()
         ajouteleve()
         
@@ -1177,6 +1179,7 @@ def interface_default():
 
 
 def interface_paramete():
+    global dict_cheval, dict_eleve
     for widget in widgets_principaux:
         widget.place_forget()
 
@@ -1215,6 +1218,7 @@ def interface_paramete():
     para_bouton_exporter_param.place(x=int(1300 * proportion_x), y=int(325 * proportion_y))
     para_bouton_ouvrir_excel.place(x=int(1295 * proportion_x), y=int(360 * proportion_y))
 
+    dict_eleve,dict_cheval = lire_parametre()    
 
 
 def lire_fichier_chevaux(path):
@@ -1745,7 +1749,7 @@ def correction():
     colonnes = len(heure_non_trier)+2
 
     if cellule.heure not in planning.liste_heure:
-        planning.set_liste_eleve(dict_eleve[jour.j])
+        planning.set_liste_eleve(dict_eleve[jour.j].copy())
 
     for ind in range(1, len(sheet["A"])+1):
         for colonne in range(1,colonnes):
