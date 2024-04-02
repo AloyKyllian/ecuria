@@ -1,27 +1,16 @@
-
-import win32com.client
-import os
-import shutil
-
+from Planning import *
+from Jour import *
+from Word import *
+import Parametre as param
+from Mail import *
 from Zip import *
+from Maj import *
 from Ftp import *
 import tkinter as tk
+import os
 
 
-def raccourci(path, nom):
-    bureau = os.path.join(os.path.expanduser("~"), "Desktop")
-    shell = win32com.client.Dispatch("WScript.Shell")
-    shortcut = shell.CreateShortCut(os.path.join(bureau, nom.replace(".exe", "")+".lnk"))
-    shortcut.Targetpath = path + "\\" + nom.replace(".exe", "")+"\\" + nom
-    print(path + "\\" + nom.replace(".exe", "")+"\\" + nom)
-    # shortcut.Targetpath = r"C:\\Users\\33621\\Documents\\cheval_python\\ecuria\\ecuria 1.5\\ecuria v1.5.exe"
-    shortcut.WorkingDirectory = path + "\\" + nom.replace(".exe", "")
-    print(path + "\\" + nom.replace(".exe", ""))
-    # shortcut.WorkingDirectory = r"C:\\Users\\33621\\Documents\\cheval_python\\ecuria\\ecuria 1.5"
-    shortcut.save()
-
-
-def installateur(window,user,version):
+def installateur(window,version):
     try:
         ftp = Ftp("83.113.54.154","lena","1234")
         connexion=True
@@ -34,12 +23,9 @@ def installateur(window,user,version):
             print(fichiers)
             version_fichiers=[]
             for fiche in fichiers:
-                if ".zip" in fiche:
-                    version_fiche  = fiche.replace(".zip","")
-                    version_fiche = version_fiche.split(" ")[-1]
-                    version_fichiers.append(float(version_fiche))
-                elif ".txt" in fiche:
-                    desinstallateur(fiche,user,ftp)
+                version_fiche  = fiche.replace(".zip","")
+                version_fiche = version_fiche.split(" ")[-1]
+                version_fichiers.append(float(version_fiche))
                 
             version_fiche = max(version_fichiers)
             fiche = fichiers[version_fichiers.index(version_fiche)]
@@ -83,17 +69,18 @@ def installateur(window,user,version):
                         
                         if supprimer_ancienne_version_var.get():
                             print("supprimer")
-                            nom_fichier = str(user)+"_ecuria "+str(version)+".txt"
-                            ftp.creer_fichier_vide(nom_fichier)
+                            # os.remove(current_path)
                             bureau = os.path.join(os.path.expanduser("~"), "Desktop")
                             try:
                                 os.remove(bureau + "\\" + nom_appli_act + ".lnk")
                             except:
                                 pass
-                        
-                        os.startfile(path_nv_version +"\\"+fiche.replace(".zip",".exe"))
-                        top.destroy()
-                        window.destroy()
+                            os.startfile(path_nv_version +"\\"+fiche.replace(".zip",".exe"))
+                            top.destroy()
+                            window.destroy()
+                            # Code pour supprimer l'ancienne version
+                        else:
+                            top.destroy()
 
                     def annuler():
                         top.destroy()
@@ -126,20 +113,3 @@ def installateur(window,user,version):
 
                     # Lancement de la boucle principale de la fenêtre top
                     top.mainloop()
-                    
-def desinstallateur(fiche,user,ftp):
-    ftp.supprimer(fiche)
-    fiche = fiche.replace(".txt","")#Lena_ecuria 1.82
-    nom = fiche.split("_")[0]#['Lena', 'ecuria 1.82']
-    print(fiche,"supprimé du ftp")
-    if nom == user:
-        print("nom d'utilisateur reconnu pret pour la suppression")
-        fichier ="../"+ str(fiche.split("_")[1])#\ecuria 1.82
-        print(fichier, os.path.exists(fichier))
-        if os.path.exists(fichier):
-            shutil.rmtree(fichier)
-            print(fichier,"supprimé")
-        else:
-            print("fichier introuvable")
-    else:
-        print("nom d'utilisateur non reconnu")

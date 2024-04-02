@@ -1,9 +1,7 @@
 from ftplib import FTP
 from io import BytesIO
-import openpyxl
-from openpyxl import load_workbook, Workbook
-from datetime import datetime, timedelta
-
+from openpyxl import load_workbook
+from datetime import datetime
 
 class Ftp():
 
@@ -12,7 +10,6 @@ class Ftp():
         self.nom_utilisateur = nom_utilisateur
         self.mot_de_passe = mot_de_passe
         self.ftp=FTP(self.adresse_serveur)
-        # return download_files_from_ftp()
 
     # adresse_serveur = "83.113.54.154"
     # nom_utilisateur = "lena"
@@ -25,10 +22,7 @@ class Ftp():
 
     def connexion(self):
         print("connexion")
-        # print(self.nom_utilisateur)
-        # print(self.mot_de_passe)
         self.ftp=FTP(self.adresse_serveur)
-        # print(self.ftp.login(user=self.nom_utilisateur, passwd=self.mot_de_passe))
         self.ftp.login(user=self.nom_utilisateur, passwd=self.mot_de_passe)
 #       230-Welcome to TrueNAS FTP Server
 #       230 User lena logged in
@@ -138,3 +132,19 @@ class Ftp():
         self.download_files(files[selected_ind:selected_ind+4])
         return files[selected_ind:selected_ind+4]
         # recup_donne2(files[selected_ind:selected_ind+4])
+
+    def supprimer(self,fiche):
+        self.connexion()
+        self.ftp.delete(fiche)
+        self.deconnexion()
+        
+    def creer_fichier_vide(self,nom_fichier):
+        # Se connecter au serveur FTP
+        self.connexion()
+        # Créer un fichier vide sur le serveur
+        self.ftp.storbinary('STOR ' + nom_fichier, open(nom_fichier, 'rb'))
+        
+        print(f"Le fichier '{nom_fichier}' a été créé vide avec succès sur le serveur FTP.")
+
+        # Se déconnecter du serveur FTP
+        self.deconnexion()

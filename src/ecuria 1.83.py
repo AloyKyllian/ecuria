@@ -16,7 +16,6 @@ import os
 from datetime import datetime, timedelta
 from PIL import Image, ImageTk
 import subprocess
-import shutil
 from tkinter import messagebox
 
 path_parametre = "parametre/"
@@ -1533,6 +1532,9 @@ def on_crtls_pressed(event):
     elif para_image1.place_info():
         para_enregistrer()
 
+def fusion():
+    pass
+
 # Importation des modules
 cellule = Cellule()  # Création d'une instance de la classe Cellule
 planning = Planning()  # Création d'une instance de la classe Planning
@@ -1921,6 +1923,9 @@ bouton_word = tk.Button(
 bouton_mail = tk.Button(
     window, text="mail", bg="#8abd45", command=ecrire_mail)
 
+bouton_fusion = tk.Button(
+    window, text="fusion", bg="#8abd45", command=fusion)
+
 # Fonction appelée lorsqu'un élément est sélectionné dans la liste des heures de travail
 
 
@@ -2142,7 +2147,6 @@ para_entry_lena = tk.Entry(window, width=int(25*proportion_x))
 if len(mail) > 1:
     para_entry_lena.insert(0, mail[1])
 
-# para_boutton_mail = tk.Button(window, bg='#8abd45', text="sauvegarder mail", command=sauvegarder_mail)
 
 def ouvrir_excel():
     print("parajour",parajour)
@@ -2187,108 +2191,8 @@ widgets_principaux.extend([label_jour, label_heure, title_label, boutton_avancer
                            label_cavalier5, label_cavalier7, eleve_listbox, cheval_listbox, label_ajout, boutton_ajouter, boutton_supprimer, visu_fichier, label_visu_fichier,
                            boutton_enregistrer,bouton_rafraichir,bouton_ouvrir_excel, label_enregistrer, image1, image2, label_heure_cheval, heure_listebox, label_historique, historique, listeCombo, boutton_absent, boutton_correction, eleve_rattrapage, label_eleve_rattrapage, boutton_eleve_rattrapage,
                            theme_entry,bouton_mail,label_user,bouton_word,label_theme,boutton_theme,label_theme_actuelle,label_theme_avant1,label_theme_avant2,label_theme_avant3])
-try:
-    ftp = Ftp("83.113.54.154","lena","1234")
-    connexion=True
-except:
-    print("pas de connexion internet")
-    connexion =False
-if connexion:
-    fichiers = ftp.liste_fichiers()
-    if fichiers:
-        print(fichiers)
-        version_fichiers=[]
-        for fiche in fichiers:
-            version_fiche  = fiche.replace(".zip","")
-            version_fiche = version_fiche.split(" ")[-1]
-            version_fichiers.append(float(version_fiche))
-            
-        version_fiche = max(version_fichiers)
-        fiche = fichiers[version_fichiers.index(version_fiche)]
-        print(version_fiche)
-        print(fiche)
-        if float(version_fiche) > version:
-            import tkinter.messagebox as messagebox
-            response = messagebox.askyesno("Mise à jour disponible", "Une nouvelle version est disponible. Voulez-vous la télécharger ?")
-            if response:
-                current_path = os.getcwd()#C:\Users\33621\Documents\cheval_python\ecuria
-                no_current_path = current_path.rsplit('\\', 1)[0]#C:\Users\33621\Documents\cheval_python
-                path_nv_version = os.path.join(no_current_path, fiche.replace(".zip",""))
-                nom_appli_act = current_path.rsplit('\\', 1)[1]#ecuria
-                print(current_path)
-                def telecharger_et_mettre_a_jour():
-                    ftp.telecharger_fichier_zip(fiche)
-                    dezipper(fiche, no_current_path, suppr_rep_destination=False)
-                    os.remove(fiche)
 
-                def valider():
-                    telecharger_et_mettre_a_jour()
-                    if raccourci_bureau_var.get():
-                        print("raccourci")
-                        print("la",no_current_path,fiche.replace(".zip",".exe"))
-                        raccourci(no_current_path,fiche.replace(".zip",".exe"))
-                        # Code pour créer un raccourci sur le bureau
-                        
-                    if garder_parametre_var.get():
-                        print("garder")
-                        # Code pour garder les paramètres
-                        
-                        path_parametre= os.path.join(path_nv_version, "parametre")
-                        if os.path.exists(path_parametre):
-                            liste_fichier_parametre = os.listdir(os.path.join(current_path, "parametre"))
-                            for fichier in os.listdir(path_parametre):
-                                if fichier in liste_fichier_parametre:
-                                    os.remove(os.path.join(path_nv_version, "parametre", fichier))
-                                    shutil.copy(os.path.join(current_path, "parametre", fichier), os.path.join(path_nv_version, "parametre"))
-                        else:
-                            shutil.copytree("parametre", path_parametre)
-                    
-                    if supprimer_ancienne_version_var.get():
-                        print("supprimer")
-                        # os.remove(current_path)
-                        bureau = os.path.join(os.path.expanduser("~"), "Desktop")
-                        try:
-                            os.remove(bureau + "\\" + nom_appli_act + ".lnk")
-                        except:
-                            pass
-                        os.startfile(path_nv_version +"\\"+fiche.replace(".zip",".exe"))
-                        top.destroy()
-                        window.destroy()
-                        # Code pour supprimer l'ancienne version
-                    else:
-                        top.destroy()
-
-                def annuler():
-                    top.destroy()
-
-                # Création de la fenêtre top
-                top = tk.Toplevel(window)
-                top.title("Mise à jour")
-                top.geometry("300x200")
-                # Création des cases à cocher
-                raccourci_bureau_var = tk.BooleanVar()
-                raccourci_bureau_var.set(True)
-                raccourci_bureau_checkbox = tk.Checkbutton(top, text="Raccourci bureau", variable=raccourci_bureau_var)
-
-                supprimer_ancienne_version_var = tk.BooleanVar()
-                supprimer_ancienne_version_checkbox = tk.Checkbutton(top, text="Supprimer ancienne version", variable=supprimer_ancienne_version_var)
-
-                garder_parametre_var = tk.BooleanVar()
-                garder_parametre_checkbox = tk.Checkbutton(top, text="Garder paramètre", variable=garder_parametre_var)
-
-                # Création des boutons
-                valider_button = tk.Button(top, text="Valider", command=valider)
-                annuler_button = tk.Button(top, text="Annuler", command=annuler)
-
-                # Placement des éléments dans la fenêtre top
-                raccourci_bureau_checkbox.place(x=10, y=10)
-                supprimer_ancienne_version_checkbox.place(x=10, y=40)
-                garder_parametre_checkbox.place(x=10, y=70)
-                valider_button.place(x=250, y=170)
-                annuler_button.place(x=200, y=170)
-
-                # Lancement de la boucle principale de la fenêtre top
-                top.mainloop()
+installateur(window,user,version)
 
 # Lancement de la boucle principale de l'application
 window.mainloop()
