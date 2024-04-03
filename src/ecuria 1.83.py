@@ -29,7 +29,7 @@ path_user = "user.txt"
 path_Mercredi =path_parametre+ "Mercredi.xlsx"
 path_Samedi =path_parametre+ "Samedi.xlsx"
 path_semaine = path_parametre+ "Semaine.xlsx"
-
+path_image = "image/"
 
 def remplir_cheval(dict_chevaux):
     dict_cheval_temp = {}
@@ -744,31 +744,44 @@ def recup_donne():
         if jour.j.lower() in file.lower() and "~$" not in file.lower() and ".xlsx" in file.lower():
             files.append((file, extract_date_from_filename(file)))
     liste = sort_files_by_date(files)
+    print("recup_donne    liste",liste)
     for i in range(len(liste)):
             if liste[i][0] == name:
                 selected_ind = i
-    nb_fichier=4
-    if i-selected_ind < 3:
-        nb_fichier = i-selected_ind
+                
+    print("recup_donne    selected_ind",selected_ind)
+    if len(liste) < 4:
+        nb_fichier = len(liste)-selected_ind
+    else:
+        nb_fichier=4
+    print("recup_donne    nb_fichier",nb_fichier)
     liste = [item[0] for item in liste[selected_ind+1:selected_ind+nb_fichier]]
-    
+    print("recup_donne    liste",liste)
     if len(liste) > 0:
         varsemaine1.set(liste[0].replace(".xlsx", ""))
         ancient_nom = path + liste[0]
         nom_fichier.append(liste[0])
         ancient_planning, x, y,planning_theme1 = recupperation_excel( path + liste[0])
         planning.set_ancien_planning(ancient_planning)
+    else:
+        planning.set_ancien_planning([])
+        varsemaine1.set("Aucun fichier")
     if len(liste) > 1:
         varsemaine2.set(liste[1].replace(".xlsx", ""))
         nom_fichier.append(liste[1])
         ancient_planning2, x, y,planning_theme2 = recupperation_excel( path +liste[1])
         planning.set_ancien_planning2(ancient_planning2)
+    else:
+        varsemaine2.set("Aucun fichier")
+        planning.set_ancien_planning2([])
     if len(liste) > 2:
         varsemaine3.set(liste[2].replace(".xlsx", ""))
         nom_fichier.append(liste[2])
         ancient_planning3, x, y,planning_theme3 = recupperation_excel(path +liste[2])
         planning.set_ancien_planning3(ancient_planning3)
-    
+    else:
+        varsemaine3.set("Aucun fichier")
+        planning.set_ancien_planning3([])
     msgbox = tk.messagebox.showinfo(
         title="Création de fichier", message="Tous les fichiers ont été récupérés")
     remplir_listbox_heure()
@@ -1080,6 +1093,7 @@ def interface_default():
     label_theme_avant3.place(x=int(650 * proportion_x), y=int(225 * proportion_y))
     bouton_word.place(x=int(1400 * proportion_x), y=int(140 * proportion_y))
     bouton_mail.place(x=int(1400 * proportion_x), y=int(180 * proportion_y))
+    bouton_fusion.place(x=int(1400 * proportion_x), y=int(220 * proportion_y))
 
     if jour.j != '':
         planning.set_liste_eleve(dict_eleve[jour.j].copy())
@@ -1487,6 +1501,7 @@ def exporter_param():
         nom_zip = 'parametre.zip'
         chemin = zip_fichiers(path_parametre, nom_zip)
         erreur =envoyer_email(user, chemin,nom_zip,"exportation des parametres de la version "+str(version),mail)
+        os.remove(nom_zip)
     except Exception as e:
         err = True
         messagebox.showerror("Erreur", f"Erreur lors de l'exportation des paramètres : {e}")
@@ -1533,7 +1548,25 @@ def on_crtls_pressed(event):
         para_enregistrer()
 
 def fusion():
-    pass
+    path = askopenfilename()
+    dict_planning, cheval, heure,planning_theme = recupperation_excel(path)
+    plan = planning.planning + dict_planning
+    # plan = []
+    print("plan",plan)
+    for cellule in planning.planning:
+        for cell in dict_planning:
+            if cellule[0] == cell[0] and cellule[1] == cell[1]:
+                plan.remove(cellule)
+                break
+            
+
+    print("planning",planning.planning)
+    print("dict_planning",dict_planning)
+    print("plan",plan)
+    
+    planning.set_planning(plan)
+    # plan.sort
+    # print("plantriée",plan)
 
 # Importation des modules
 cellule = Cellule()  # Création d'une instance de la classe Cellule
@@ -1563,7 +1596,7 @@ window.bind("<Left>", on_left_pressed)
 window.bind("<Control-s>", on_crtls_pressed)
 window.bind("<Control-S>", on_crtls_pressed)
 window.bind("<Delete>", on_delete_pressed)
-set_background(window, "image_fond.png")
+set_background(window, path_image+"image_fond.png")
 
 widgets_principaux = []
 
@@ -1571,15 +1604,17 @@ widgets_parametre = []
 
 ancient_nom = ""
 
+
+
 image_label = add_centered_image(
-    window, "0f382f680a13445c8e6484ecbbe2a2b5-transformed.png", 169*4, 166*4)
+    window, path_image+"logo.png", 169*4, 166*4)
 
 para_image1 = image(
-    window, "image1.png", int(2388/5*proportion_x), int(1668/5*proportion_y))
-image1 = image(window, "image1.png", int(2388/8.5*proportion_x ), int(1668/8.5*proportion_y))
-image2 = image(window, "image2.png", int(2388/8.5*proportion_x), int(1668/8.5*proportion_y))
-image3 = image(window, "image3.png", int(2388/8.5*proportion_x), int(1668/8.5*proportion_y))
-image4 = image(window, "image4.png", int(2388/7*proportion_x), int(1668/7))
+    window, path_image+"image1.png", int(2388/5*proportion_x), int(1668/5*proportion_y))
+image1 = image(window, path_image+"image1.png", int(2388/8.5*proportion_x ), int(1668/8.5*proportion_y))
+image2 = image(window, path_image+"image2.png", int(2388/8.5*proportion_x), int(1668/8.5*proportion_y))
+image3 = image(window, path_image+"image3.png", int(2388/8.5*proportion_x), int(1668/8.5*proportion_y))
+image4 = image(window, path_image+"image4.png", int(2388/7*proportion_x), int(1668/7))
 
 label_version = tk.Label(window, text="Version " + str(version), bg='#b4b4b4')
 label_version.place(x=int(1395*proportion_x), y=int(780*proportion_y))
@@ -2190,7 +2225,7 @@ widgets_parametre.extend(
 widgets_principaux.extend([label_jour, label_heure, title_label, boutton_avancer_heure, boutton_reculer_heure, label_cavalier, label_cavalier2, label_cavalier3, label_cavalier6, label_cavalier4,
                            label_cavalier5, label_cavalier7, eleve_listbox, cheval_listbox, label_ajout, boutton_ajouter, boutton_supprimer, visu_fichier, label_visu_fichier,
                            boutton_enregistrer,bouton_rafraichir,bouton_ouvrir_excel, label_enregistrer, image1, image2, label_heure_cheval, heure_listebox, label_historique, historique, listeCombo, boutton_absent, boutton_correction, eleve_rattrapage, label_eleve_rattrapage, boutton_eleve_rattrapage,
-                           theme_entry,bouton_mail,label_user,bouton_word,label_theme,boutton_theme,label_theme_actuelle,label_theme_avant1,label_theme_avant2,label_theme_avant3])
+                           theme_entry,bouton_fusion,bouton_mail,label_user,bouton_word,label_theme,boutton_theme,label_theme_actuelle,label_theme_avant1,label_theme_avant2,label_theme_avant3])
 
 installateur(window,user,version)
 
