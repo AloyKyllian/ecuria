@@ -237,7 +237,11 @@ def ajouter():
     Returns:
         Aucun.
     """
-    err = planning.ajout(cellule)
+    err = -2
+    bg_color = cheval_listbox.itemcget(cellule.ind_cheval, "background")
+    print(bg_color)
+    if bg_color != "violet":
+        err = planning.ajout(cellule)
     if err == None or err == -4:
         if elevecarte == True:
             unesessionmoins(cellule.eleve,cellule.heure)
@@ -252,13 +256,13 @@ def ajouter():
             "ajout", (cellule.heure, cellule.cheval, cellule.eleve))
     elif err == -1:
         msgbox = tk.messagebox.showerror(
-            title="creation de fichier", message="vous n'avez pas selectionné toutes les informations necessaire à l'ajout")
+            title="ajout", message="vous n'avez pas selectionné toutes les informations necessaire à l'ajout")
     elif err == -2:
         msgbox = tk.messagebox.showerror(
-            title="creation de fichier", message="Ne peux etre ajouter car ce cheval travaille deja durant cette heure")
+            title="ajout", message="Ne peux etre ajouter car ce cheval travaille deja durant cette heure")
     elif err == -3:
         msgbox = tk.messagebox.showerror(
-            title="creation de fichier", message="Ne peux etre ajouter car ce cheval travaille deja 4 heure dans la journée")
+            title="ajout", message="Ne peux etre ajouter car ce cheval travaille deja 4 heure dans la journée")
     elif err == -5:
         print(f"Erreur numéro {err}, ajout annulé.")
         pass
@@ -544,7 +548,6 @@ def colorier_chevaux():
             if cell[0][0:2] in cellule.heure and cell[1] in planning.cheval:
                 cheval_listbox.itemconfig(planning.cheval[cell[1]][0], {'bg': 'violet'})
     elif jour.j == "Semaine":
-        
         for cell in planning.planning:
             print( cell[0][-4:-1] , cellule.heure)
             if cell[0][0:2] in cellule.heure and cell[1] in planning.cheval and cell[0][-4:-1] in cellule.heure:
@@ -1094,6 +1097,8 @@ def interface_default():
     bouton_word.place(x=int(1400 * proportion_x), y=int(140 * proportion_y))
     bouton_mail.place(x=int(1400 * proportion_x), y=int(180 * proportion_y))
     bouton_fusion.place(x=int(1400 * proportion_x), y=int(220 * proportion_y))
+    info.place(x=int(460 * proportion_x), y=int(35 * proportion_y))
+    info2.place(x=int(1400 * proportion_x), y=int(260 * proportion_y))
 
     if jour.j != '':
         planning.set_liste_eleve(dict_eleve[jour.j].copy())
@@ -1616,9 +1621,59 @@ image2 = image(window, path_image+"image2.png", int(2388/8.5*proportion_x), int(
 image3 = image(window, path_image+"image3.png", int(2388/8.5*proportion_x), int(1668/8.5*proportion_y))
 image4 = image(window, path_image+"image4.png", int(2388/7*proportion_x), int(1668/7))
 
+info = image(window, path_image+"info2.png", int(300/10*proportion_x), int(300/10*proportion_y))
+
+info2 = image(window, path_image+"info2.png", int(300/10*proportion_x), int(300/10*proportion_y))
 label_version = tk.Label(window, text="Version " + str(version), bg='#b4b4b4')
 label_version.place(x=int(1395*proportion_x), y=int(780*proportion_y))
 
+def on_info_clicked(event):
+    pop = Toplevel(window)
+    pop.title("information couleurs de chevaux")
+    pop.geometry("550x120")
+
+
+    label1 =  tk.Label(pop, text="KABILE", font=("Corbel", int(13*proportion_x)), bg='violet',justify=LEFT,)
+    label2 =  tk.Label(pop, text="VIOLETTE", font=("Corbel", int(13*proportion_x)), bg='red',justify=LEFT)
+    label3 =  tk.Label(pop, text="KID", font=("Corbel", int(13*proportion_x)), bg='orange',justify=LEFT)
+    label4 =  tk.Label(pop, text="SAMOURAI", font=("Corbel", int(13*proportion_x)), bg='yellow',justify=LEFT)
+    
+    label1_1 =  tk.Label(pop, text=" violet : ce cheval est deja pris durant cette heure de la journée", font=("Corbel", int(13*proportion_x)),justify=LEFT)
+    label2_1 =  tk.Label(pop, text=" rouge : ce cheval a été monté par cette eleve la semaine derniere", font=("Corbel", int(13*proportion_x)),justify=LEFT)
+    label3_1 =  tk.Label(pop, text=" orange : ce cheval a été monté par cette eleve il y a deux semaines", font=("Corbel", int(13*proportion_x)),justify=LEFT)
+    label4_1 =  tk.Label(pop, text=" jaune : ce cheval a été monté par cette eleve il y a trois semaines", font=("Corbel", int(13*proportion_x)),justify=LEFT)
+    
+
+    # Create 8 labels in a 2x4 configuration
+    labels = [label1, label2, label3, label4, label1_1, label2_1, label3_1, label4_1]
+
+    # Place the labels in a 2x4 grid
+    for i in range(4):
+        for j in range(2):
+            labels[i+j*4].grid(row=i, column=j)
+    
+def on_info2_clicked(event):
+    pop = Toplevel(window)
+    pop.title("information couleurs de chevaux")
+    pop.geometry("500x150")
+
+
+    label1 =  tk.Label(pop, text="rafraichir permet de ", font=("Corbel", int(13*proportion_x)))
+    label2 =  tk.Label(pop, text="word ..", font=("Corbel", int(13*proportion_x)))
+    label3 =  tk.Label(pop, text="mail", font=("Corbel", int(13*proportion_x)))
+    label4 =  tk.Label(pop, text="fusion", font=("Corbel", int(13*proportion_x)))
+    
+
+    # Create 8 labels in a 2x4 configuration
+    labels = [label1, label2, label3, label4]
+
+    # Place the labels in a 2x4 grid
+    for i in range(4):
+        labels[i].grid(row=i, column=0)
+    
+    
+info.bind("<Button-1>", on_info_clicked)
+info2.bind("<Button-1>", on_info2_clicked)
 # Définition des variables de contrôle
 varheure = StringVar()
 varjour = StringVar()
@@ -2225,7 +2280,7 @@ widgets_parametre.extend(
 widgets_principaux.extend([label_jour, label_heure, title_label, boutton_avancer_heure, boutton_reculer_heure, label_cavalier, label_cavalier2, label_cavalier3, label_cavalier6, label_cavalier4,
                            label_cavalier5, label_cavalier7, eleve_listbox, cheval_listbox, label_ajout, boutton_ajouter, boutton_supprimer, visu_fichier, label_visu_fichier,
                            boutton_enregistrer,bouton_rafraichir,bouton_ouvrir_excel, label_enregistrer, image1, image2, label_heure_cheval, heure_listebox, label_historique, historique, listeCombo, boutton_absent, boutton_correction, eleve_rattrapage, label_eleve_rattrapage, boutton_eleve_rattrapage,
-                           theme_entry,bouton_fusion,bouton_mail,label_user,bouton_word,label_theme,boutton_theme,label_theme_actuelle,label_theme_avant1,label_theme_avant2,label_theme_avant3])
+                           theme_entry,info,info2,bouton_fusion,bouton_mail,label_user,bouton_word,label_theme,boutton_theme,label_theme_actuelle,label_theme_avant1,label_theme_avant2,label_theme_avant3])
 
 installateur(window,user,version)
 
