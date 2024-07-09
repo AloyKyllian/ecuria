@@ -1,11 +1,11 @@
 from Planning import *
+from Ftp import *
 from Jour import *
 from Word import *
 import Parametre as param
 from Mail import *
 from Zip import *
 from Maj import *
-from Ftp import *
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
@@ -1499,14 +1499,53 @@ def importer_param():
         messagebox.showinfo("importation de parametre", "Les paramètres ont été importés avec succès!")
 
 
-    
 def exporter_param():
+    def verif_case_valid():
+        # Get the selected checkboxes
+        selected_checkboxes = [checkbox.cget("text") for checkbox in checkboxes if checkbox.get()]
+
+        # Print the selected checkboxes
+        for checkbox in selected_checkboxes:
+            print(checkbox)
+                
     err = False
     try:
         nom_zip = 'parametre.zip'
-        chemin = zip_fichiers(path_parametre, nom_zip)
-        erreur =envoyer_email(user, chemin,nom_zip,"exportation des parametres de la version "+str(version),mail)
-        os.remove(nom_zip)
+        files = os.listdir(path_parametre)
+        pop = Toplevel(window)
+        pop.title("choix des parametres a exporter")
+        pop.geometry("550x120")
+
+
+        # Create buttons for each file
+        # Create checkboxes for each file
+        checkboxes = []
+        for i, file in enumerate(files):
+            checkbox = tk.Checkbutton(pop, text=file)
+            checkboxes.append(checkbox)
+        
+        
+
+        # Place the checkboxes in a grid
+        numx = 0
+        numy = 0
+        num=0
+        for i, checkbox in enumerate(checkboxes):
+            checkbox.place(x=0+numx, y=0+numy)
+            numy += 20
+            num += 1
+            if num > 4:
+                num = 0
+                numy = 0
+                numx += 200
+        # Create buttons for "Annuler" and "Valider"
+        button_annuler = tk.Button(pop, text="Annuler", command=pop.destroy)
+        button_valider = tk.Button(pop, text="Valider", command= verif_case_valid)
+
+        # Place the buttons at the bottom right of the window
+        button_annuler.place(x=450, y=90)
+        button_valider.place(x=500, y=90)
+        window.wait_window(pop)
     except Exception as e:
         err = True
         messagebox.showerror("Erreur", f"Erreur lors de l'exportation des paramètres : {e}")

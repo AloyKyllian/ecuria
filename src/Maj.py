@@ -24,7 +24,8 @@ def raccourci(path, nom):
 def installateur(window,user,version):
     try:
         ftp = Ftp("83.113.54.154","lena","1234")
-        connexion=True
+        if (ftp.ftp.getwelcome() == "230 User lena logged in"):
+            connexion=True
     except:
         print("pas de connexion internet")
         connexion =False
