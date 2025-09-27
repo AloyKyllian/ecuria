@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+output/
+parametre_exporter/
+grid_principal.png
+parametre.zip
+image/

@@ -1,4 +1,4 @@
-class Cellule():
+class Cellule:
     """
     La classe Cellule représente une unité de planification dans le système de gestion de planning.
 

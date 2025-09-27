@@ -1,7 +1,7 @@
 from Cellule import *
 
 
-class Planning():
+class Planning:
     """
     La classe Planning représente un système de gestion de planning.
 
@@ -244,9 +244,13 @@ class Planning():
         for i in self.planning:
             if (cellule.heure, cellule.cheval) == (i[0], i[1]):
                 return -2
-        if cellule.heure == "heure" or cellule.cheval == "cheval" or cellule.eleve == "eleve":
+        if (
+            cellule.heure == "heure"
+            or cellule.cheval == "cheval"
+            or cellule.eleve == "eleve"
+        ):
             return -1
-        elif len(self.cheval) != 0 and self.cheval[cellule.cheval][0] >= 4:
+        elif len(self.cheval) != 0 and self.cheval[cellule.cheval][1] >= 4:
             return -3
         elif cellule.getCellule() in self.planning:
             return -5
@@ -254,7 +258,7 @@ class Planning():
             self.planning.append(cellule.getCellule())
             self.planning.sort()
             if cellule.cheval in self.cheval:
-                self.cheval[cellule.cheval][0] += 1
+                self.cheval[cellule.cheval][1] += 1
             else:
                 return -4
 
@@ -290,7 +294,7 @@ class Planning():
         if cellule.getCellule() in self.planning:
             self.planning.remove(cellule.getCellule())
             if cellule.cheval in self.cheval:
-                self.cheval[cellule.cheval][0] -= 1
+                self.cheval[cellule.cheval][1] -= 1
             else:
                 return -4
         else:
@@ -321,7 +325,8 @@ class Planning():
         heure = 0
         a = 0
         txt = ""
-        txt = (f"\t\t\t\t\t\tPlanning {jour}")
+        txt = f"\tPlanning {jour}"
+        self.planning.sort()
         for i in self.planning:
             if heure != i[0]:
                 heure = i[0]
@@ -354,7 +359,7 @@ class Planning():
         index = planning.index_cheval(nom_du_cheval)
         print(f"L'index de {nom_du_cheval} est {index}.")
         """
-        return self.cheval[cheval][1]-4
+        return self.cheval[cheval][0]
 
     def ancient_cheval_de(self, personne, heure):
         """
@@ -383,14 +388,26 @@ class Planning():
         """
         cavalier = []
         for i in self.ancien_planning:
-            if (i[2], i[0]) == (personne, heure):
-                cavalier.append((i[1], self.cheval[i[1]][1]-4))
+            if (i[2].upper(), i[0].upper()) == (personne.upper(), heure.upper()) and i[
+                1
+            ] in self.cheval:
+                cavalier.append((i[1], self.cheval[i[1]][0]))
+        if len(cavalier) == 0:
+            cavalier.append(("cheval", ""))
         for i in self.ancien_planning2:
-            if (i[2], i[0]) == (personne, heure):
-                cavalier.append((i[1], self.cheval[i[1]][1]-4))
+            if (i[2].upper(), i[0].upper()) == (personne.upper(), heure.upper()) and i[
+                1
+            ] in self.cheval:
+                cavalier.append((i[1], self.cheval[i[1]][0]))
+        if len(cavalier) == 1:
+            cavalier.append(("cheval1", ""))
         for i in self.ancien_planning3:
-            if (i[2], i[0]) == (personne, heure):
-                cavalier.append((i[1], self.cheval[i[1]][1]-4))
+            if (i[2].upper(), i[0].upper()) == (personne.upper(), heure.upper()) and i[
+                1
+            ] in self.cheval:
+                cavalier.append((i[1], self.cheval[i[1]][0]))
+        if len(cavalier) == 2:
+            cavalier.append(("cheval2", ""))
         return cavalier
 
     def ancient_eleve_de(self, cheval):
@@ -469,7 +486,7 @@ class Planning():
         nbr = 0
         for i in self.planning:
             if i[1] == cheval:
-                nbr = nbr+1
+                nbr = nbr + 1
         return nbr
 
     def append_historique(self, type, donne):
@@ -507,11 +524,57 @@ class Planning():
 
 
 if __name__ == "__main__":
-
     planning = Planning()
     cellule = Cellule()
-    planning.set_cheval({'VIOLETTE': [0, 4], 'SURPRISE': [0, 5], 'PEPITE': [0, 6], 'PANDA': [0, 7], 'PONPON': [0, 8], 'NUAGE': [0, 9], 'HOUSTON': [0, 10], 'REGLISSE': [0, 11], 'NAVARA': [0, 12], 'P. TONNERRE': [0, 13], 'GRISETTE': [0, 14], 'DANETTE': [0, 15], 'TIC': [0, 16], 'TAC': [0, 17], 'JAZZY': [0, 18], 'LITTLE': [2, 19], 'MANGO': [0, 20], 'SORBET': [0, 21], 'RASTA': [0, 22], 'PEGASE': [0, 23], 'BALKIS': [0, 24], 'BALI': [0, 25], 'CARA': [
-        0, 26], 'SAMOURAI': [0, 27], 'FLICKA': [0, 28], 'BANZAI': [0, 29], 'KID ': [0, 30], 'DIESEL': [0, 31], 'SHEITAN': [0, 32], 'SHAMIRA': [0, 33], 'SINAI': [0, 34], 'ETOILE': [0, 35], 'VASCO': [0, 36], 'DOMINO': [0, 37], 'ALTAI': [0, 38], 'ICHIBAI': [0, 39], 'CHOGUN': [0, 40], 'ESPOIR': [0, 41], 'WAR': [0, 42], 'NEVA': [0, 43], 'PAOLA': [0, 44], 'SEGOVIA': [0, 45], 'ICARE': [0, 46], 'ENZO ': [0, 47], 'BRIOSSO': [0, 48]})
+    planning.set_cheval(
+        {
+            "VIOLETTE": [0, 4],
+            "SURPRISE": [0, 5],
+            "PEPITE": [0, 6],
+            "PANDA": [0, 7],
+            "PONPON": [0, 8],
+            "NUAGE": [0, 9],
+            "HOUSTON": [0, 10],
+            "REGLISSE": [0, 11],
+            "NAVARA": [0, 12],
+            "P. TONNERRE": [0, 13],
+            "GRISETTE": [0, 14],
+            "DANETTE": [0, 15],
+            "TIC": [0, 16],
+            "TAC": [0, 17],
+            "JAZZY": [0, 18],
+            "LITTLE": [2, 19],
+            "MANGO": [0, 20],
+            "SORBET": [0, 21],
+            "RASTA": [0, 22],
+            "PEGASE": [0, 23],
+            "BALKIS": [0, 24],
+            "BALI": [0, 25],
+            "CARA": [0, 26],
+            "SAMOURAI": [0, 27],
+            "FLICKA": [0, 28],
+            "BANZAI": [0, 29],
+            "KID ": [0, 30],
+            "DIESEL": [0, 31],
+            "SHEITAN": [0, 32],
+            "SHAMIRA": [0, 33],
+            "SINAI": [0, 34],
+            "ETOILE": [0, 35],
+            "VASCO": [0, 36],
+            "DOMINO": [0, 37],
+            "ALTAI": [0, 38],
+            "ICHIBAI": [0, 39],
+            "CHOGUN": [0, 40],
+            "ESPOIR": [0, 41],
+            "WAR": [0, 42],
+            "NEVA": [0, 43],
+            "PAOLA": [0, 44],
+            "SEGOVIA": [0, 45],
+            "ICARE": [0, 46],
+            "ENZO ": [0, 47],
+            "BRIOSSO": [0, 48],
+        }
+    )
     cellule.set_cellule("19h", "VIOLETTE", "lena")
     print(planning.ajout(cellule))
     print(planning.planning)
