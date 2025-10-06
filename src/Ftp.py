@@ -2,7 +2,9 @@ from ftplib import FTP
 from io import BytesIO
 from openpyxl import load_workbook
 from datetime import datetime
+from Log import LoggerCounter
 
+logger = LoggerCounter(name="Ftp").logger
 
 class Ftp:
     def __init__(self, adresse_serveur, nom_utilisateur, mot_de_passe):
@@ -11,9 +13,6 @@ class Ftp:
         self.mot_de_passe = mot_de_passe
         self.ftp = FTP(self.adresse_serveur)
 
-    # adresse_serveur = "83.113.54.154"
-    # nom_utilisateur = "lena"
-    # mot_de_passe = "1234"
     def liste_fichiers(self):
         self.connexion()
         fichiers = self.ftp.nlst()
@@ -21,51 +20,39 @@ class Ftp:
         return fichiers
 
     def connexion(self):
-        print("connexion")
+        logger.info("Connexion au serveur FTP %s", self.adresse_serveur)
         self.ftp = FTP(self.adresse_serveur)
         self.ftp.login(user=self.nom_utilisateur, passwd=self.mot_de_passe)
 
-    #       230-Welcome to TrueNAS FTP Server
-    #       230 User lena logged in
-
     def deconnexion(self):
-        print("deconnexion")
+        logger.info("Déconnexion du serveur FTP")
         self.ftp.close()
 
     def telecharger_fichier_zip(self, fichier_zip):
         self.connexion()
-        print("telecharger_fichier_zip")
+        logger.info("Téléchargement du fichier ZIP : %s", fichier_zip)
         with open(fichier_zip, "wb") as local_file:
             self.ftp.retrbinary(f"RETR {fichier_zip}", local_file.write)
         self.deconnexion()
 
-    def telecharger_fichier_ftp(self, fichier):
+    def telecharger_fichier_ftp(self, fichiers):
         self.connexion()
-        print("telecharger_fichier_ftp")
-        for fichier_local in fichier:
+        logger.info("Téléchargement des fichiers FTP")
+        for fichier_local in fichiers:
             wb = load_workbook(fichier_local)
-
-            # Créez un fichier en mémoire pour stocker le contenu du fichier Excel
             excel_content = BytesIO()
             wb.save(excel_content)
-
-            # Téléversez le fichier Excel en mémoire sur le serveur FTP
-            excel_content.seek(0)  # Revenir au début du fichier en mémoire
+            excel_content.seek(0)
             self.ftp.storbinary("STOR " + fichier_local, excel_content)
-            print(
-                f"Le fichier {fichier_local} a été téléchargé avec succès depuis le serveur FTP."
-            )
-
+            logger.info("Fichier %s téléchargé avec succès sur le serveur FTP.", fichier_local)
         self.deconnexion()
 
     def download_files_from_ftp(self):
         self.connexion()
-        print("download_files_from_ftp")
+        logger.info("Récupération de la liste des fichiers depuis le FTP")
         files = self.ftp.nlst()
 
-        samedi_files = []
-
-        mercredi_files = []
+        samedi_files, mercredi_files = [], []
 
         for file in files:
             if "samedi" in file.lower():
@@ -76,28 +63,21 @@ class Ftp:
         samedi_files = self.sort_files_by_date(samedi_files)
         mercredi_files = self.sort_files_by_date(mercredi_files)
 
-        samedi_file_names = [file[0] for file in samedi_files]
-        mercredi_file_names = [file[0] for file in mercredi_files]
-
         self.deconnexion()
-
-        return samedi_file_names, mercredi_file_names
+        return [f[0] for f in samedi_files], [f[0] for f in mercredi_files]
 
     def sort_files_by_date(self, files):
-        # Trie les fichiers par date (les plus récents en premier)
-        sorted_files = sorted(files, key=lambda x: x[1], reverse=True)
-        return sorted_files
+        return sorted(files, key=lambda x: x[1], reverse=True)
 
     def extract_date_from_filename(self, filename):
-        # Extrait la date du nom du fichier
         date_str = filename.split()[-1].split(".")[0]
-        file_date = datetime.strptime(date_str, "%d-%m-%Y")
-        return file_date
+        return datetime.strptime(date_str, "%d-%m-%Y")
 
     def ecrire_dans_fichier(self, tableau_tuples, nom_fichier="donnees.txt"):
         with open(nom_fichier, "w") as fichier:
             for ligne in tableau_tuples:
                 fichier.write(",".join(ligne) + "\n")
+        logger.info("Écriture dans le fichier %s terminée.", nom_fichier)
 
     def lire_depuis_fichier(self, nom_fichier="donnees.txt"):
         tableau_tuples = []
@@ -106,47 +86,33 @@ class Ftp:
             for ligne in lignes:
                 heure, cheval, personne = ligne.strip().split(",")
                 tableau_tuples.append((heure, cheval, personne))
+        logger.info("Lecture du fichier %s terminée.", nom_fichier)
         return tableau_tuples
 
     def download_files(self, files):
         self.connexion()
-        print("download_files")
+        logger.info("Téléchargement des fichiers : %s", files)
         for file in files:
-            with open(f"{file}", "wb") as local_file:
+            with open(file, "wb") as local_file:
                 self.ftp.retrbinary(f"RETR {file}", local_file.write)
         self.deconnexion()
 
     def download_selected_and_recent_files(self, day, selected_file):
         samedi_file_names, mercredi_file_names = self.download_files_from_ftp()
-        # suppr_excel()
-        if day.lower() == "samedi":
-            files = samedi_file_names
-        elif day.lower() == "mercredi":
-            files = mercredi_file_names
-        # Récupère les trois fichiers les plus récents du même jour
-        for i in range(len(files)):
-            if files[i] == selected_file:
-                selected_ind = i
-
-        # Upload des fichiers
-        self.download_files(files[selected_ind : selected_ind + 4])
-        return files[selected_ind : selected_ind + 4]
-        # recup_donne2(files[selected_ind:selected_ind+4])
+        files = samedi_file_names if day.lower() == "samedi" else mercredi_file_names
+        selected_ind = next(i for i, f in enumerate(files) if f == selected_file)
+        self.download_files(files[selected_ind:selected_ind + 4])
+        return files[selected_ind:selected_ind + 4]
 
     def supprimer(self, fiche):
         self.connexion()
         self.ftp.delete(fiche)
+        logger.info("Fichier supprimé : %s", fiche)
         self.deconnexion()
 
     def creer_fichier_vide(self, nom_fichier):
-        # Se connecter au serveur FTP
         self.connexion()
-        # Créer un fichier vide sur le serveur
-        self.ftp.storbinary("STOR " + nom_fichier, open(nom_fichier, "rb"))
-
-        print(
-            f"Le fichier '{nom_fichier}' a été créé vide avec succès sur le serveur FTP."
-        )
-
-        # Se déconnecter du serveur FTP
+        with open(nom_fichier, "rb") as f:
+            self.ftp.storbinary("STOR " + nom_fichier, f)
+        logger.info("Fichier vide créé : %s", nom_fichier)
         self.deconnexion()

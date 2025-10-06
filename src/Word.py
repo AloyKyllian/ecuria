@@ -5,6 +5,9 @@ from docx.enum.section import WD_ORIENT
 from Planning import *
 from tkinter.filedialog import askdirectory
 from docx.shared import RGBColor
+from Log import LoggerCounter
+
+logger = LoggerCounter(name="Word").logger
 
 
 def word(jour, nom, planning, theme_t, user, liste_eleves):
