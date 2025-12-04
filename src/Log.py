@@ -37,13 +37,13 @@ class LoggerCounter(logging.Filter):
         self.logger = logging.getLogger(name)
         self.logger.setLevel(logging.DEBUG)
 
-        if name == "Planning":
-            print(name)
-            # Rotation simple : on garde uniquement le log du lancement précédent
-            if os.path.exists(log_file):
-                if os.path.exists(log_file + ".1"):
-                    os.remove(log_file + ".1")
-                os.rename(log_file, log_file + ".1")
+        # if name == "Planning":
+        #     print(name)
+        #     # Rotation simple : on garde uniquement le log du lancement précédent
+        #     if os.path.exists(log_file):
+        #         if os.path.exists(log_file + ".1"):
+        #             os.remove(log_file + ".1")
+        #         os.rename(log_file, log_file + ".1")
 
         # if not name:
         #     caller_file = inspect.stack()[1].filename

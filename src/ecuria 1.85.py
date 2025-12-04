@@ -6,7 +6,6 @@ import Parametre as param
 from Mail import *
 from Zip import *
 from Maj import *
-from Configuration import open_configuration_window,Config
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
@@ -966,6 +965,8 @@ def ecrire_fichier():
 
     # print("ecrire_fichier    plannning.liste_heure",planning.liste_heure)
     logger.debug("plannning.liste_heure %s", planning.liste_heure)
+    logger.debug("liste_cheval %s",liste_cheval)
+    logger.debug("planning_theme %s",planning_theme )
     dict_heure = {}
     Nb = 0
     for heure in heure_trier:
@@ -2093,14 +2094,13 @@ planning = Planning()  # Création d'une instance de la classe Planning
 jour = Jour()  # Création d'une instance de la classe Jour
 dict_eleve, dict_cheval = lire_parametre()
 
-version = 1.84  # Version actuelle du programme
+version = 1.85  # Version actuelle du programme
 user = get_personne()
 log_stats.set_user(user)
 # print(user)
 logger.info("user %s", user)
 mail, moniteur = get_mail()
 
-config = Config()
 
 bg_button = "#8abd45"  # Couleur de fond des boutons
 bg_titre = "#568A03"  # Couleur de fond des titres
@@ -3069,7 +3069,6 @@ menubar = Menu(window)
 sousmenu = Menu(menubar, tearoff=0)
 sousmenu.add_command(label="parametre", command=mode_parametre)
 sousmenu.add_command(label="principal", command=mode_default)
-sousmenu.add_command(label="configuration", command=open_configuration_window)
 
 
 # Ajout des éléments au menu
