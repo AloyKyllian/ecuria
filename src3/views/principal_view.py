@@ -1,258 +1,268 @@
+import customtkinter as ctk
 import tkinter as tk
 from tkinter import ttk
 
-class PrincipalView(tk.Frame):
+ctk.set_appearance_mode("light")
+ctk.set_default_color_theme("green")
+
+# 🎨 COULEURS
+GREEN = "#8abd45"
+GREEN_HOVER = "#6f9f2f"
+TEXT = "#2f2f2f"
+
+
+class PrincipalView(ctk.CTkFrame):
+
     def __init__(self, parent, controller, proportion_x, proportion_y):
         super().__init__(parent)
+
         self.controller = controller.get_principal_controller()
         self.contr_image = controller.get_image_controller()
-        self.place_image(proportion_x,proportion_y)
+
+        self.proportion_x = proportion_x
+        self.proportion_y = proportion_y
+
         self.create_var()
-        self.create_widgets(proportion_x,proportion_y)
-        self.place_widget(proportion_x,proportion_y)
-        
-        
+        self.place_image(proportion_x, proportion_y)
+        self.create_widgets()
+        self.place_widget()
+
+    # ---------------- STYLE HELPERS ---------------- #
+    def style_button(self, text, command):
+        return ctk.CTkButton(
+            self,
+            text=text,
+            command=command,
+            width=10,
+            fg_color=GREEN,
+            hover_color=GREEN_HOVER,
+            text_color="black",
+            corner_radius=8,
+            bg_color="#b4b4b4"
+        )
+
+    def style_label(self, text=None, textvar=None, size=12, bold=False):
+        return ctk.CTkLabel(
+            self,
+            text=text,
+            textvariable=textvar,
+            font=("Segoe UI", size, "bold" if bold else "normal"),
+            text_color=TEXT,
+            fg_color="#b4b4b4"
+        )
+    
+    def style_entry(self, placeholder=""):
+        return ctk.CTkEntry(
+            self,
+            placeholder_text=placeholder,
+            fg_color="#ffffff",          # fond blanc propre
+            text_color="#000000",
+            border_color="#8abd45",      # ton vert
+            border_width=2,
+            corner_radius=10,
+            bg_color="#b4b4b4"           # 🔥 CRUCIAL pour les coins
+        )
+
+    def style_textbox(self, width=200, height=100):
+        return ctk.CTkTextbox(
+            self,
+            width=width,
+            height=height,
+            fg_color="#cccccc",          # fond blanc
+            text_color="#000000",
+            border_color="#8abd45",
+            border_width=2,
+            corner_radius=10,
+            bg_color="#b4b4b4"           # 🔥 pour les coins
+        )
+
+
+
+
+
+
+
+    # ---------------- VARIABLES ---------------- #
     def create_var(self):
         self.varjour = tk.StringVar(value="Jour")
         self.varheure = tk.StringVar(value="Heure")
         self.user_var = tk.StringVar(value="Utilisateur")
+
         self.varsemaine1 = tk.StringVar(value="Semaine 1")
         self.varcavalier = tk.StringVar(value="Cavalier")
         self.varsemaine2 = tk.StringVar(value="Semaine 2")
         self.varcavalier1 = tk.StringVar(value="Cavalier 1")
         self.varsemaine3 = tk.StringVar(value="Semaine 3")
         self.varcavalier2 = tk.StringVar(value="Cavalier 2")
+
         self.varajout = tk.StringVar(value="Ajout")
         self.varheure_cheval = tk.StringVar(value="Heure du Cheval")
+
         self.theme = tk.StringVar(value="Thème")
         self.theme1 = tk.StringVar(value="Thème 1")
         self.theme2 = tk.StringVar(value="Thème 2")
         self.theme3 = tk.StringVar(value="Thème 3")
-        # self.user_var.set(user)
 
-    def create_widgets(self,proportion_x,proportion_y):
-        self.label_jour = tk.Label(self, textvariable=self.varjour, bg='#b4b4b4',font=("Comic Sans MS", int(15*proportion_x)))
+    # ---------------- WIDGETS ---------------- #
+    def create_widgets(self):
 
-        self.label_heure = tk.Label(self, textvariable=self.varheure, bg='#b4b4b4')
+        # HEADER
+        self.title_label = self.style_label("GESTION PLANNING", size=18, bold=True)
+        self.label_user = self.style_label(textvar=self.user_var)
 
-        self.label_user = tk.Label(self, textvariable=self.user_var,font=("Comic Sans MS", int(15*proportion_x)), bg='#b4b4b4')
+        # NAV
+        self.boutton_avancer_heure = self.style_button("precedent", self.controller.heure_precedant)
+        self.boutton_reculer_heure = self.style_button("suivant", self.controller.heure_suivant)
 
-        # Création d'une étiquette pour le titre
-        self.title_label = tk.Label(
-            self, text="GESTION PLANNING", font=("Comic Sans MS", int(17*proportion_x)), bg='#b4b4b4')
+        # INFOS
+        self.label_cavalier = self.style_label("INFOS CAVALIER", size=14, bold=True)
 
-        # Boutons pour avancer et reculer dans les heures
-        self.boutton_avancer_heure = tk.Button(
-            self, width=8, bg='#8abd45', text="precedent", command=self.controller.heure_precedant)
+        self.label_cavalier2 = self.style_label(textvar=self.varsemaine1)
+        self.label_cavalier3 = self.style_label(textvar=self.varcavalier)
+        self.label_cavalier6 = self.style_label(textvar=self.varsemaine2)
+        self.label_cavalier4 = self.style_label(textvar=self.varcavalier1)
+        self.label_cavalier7 = self.style_label(textvar=self.varsemaine3)
+        self.label_cavalier5 = self.style_label(textvar=self.varcavalier2)
 
-        self.boutton_reculer_heure = tk.Button(
-            self, width=8, bg='#8abd45', text="suivant", command=self.controller.heure_suivant)
+        # ACTIONS
+        self.boutton_absent = self.style_button("ABS", self.controller.absent)
+        self.boutton_correction = self.style_button("correction", self.controller.correction)
 
-        # Étiquettes pour afficher les informations du cavalier
-        self.label_cavalier = tk.Label(
-            self, text="INFOS CAVALIER", font=("Corbel", int(14*proportion_x)), bg='#8abd45')
+        # LISTBOX
+        self.eleve_listbox = tk.Listbox(self)
+        self.cheval_listbox = tk.Listbox(self)
 
-        self.label_cavalier2 = tk.Label(
-            self, textvariable=self.varsemaine1, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
+        for lb in [self.eleve_listbox, self.cheval_listbox]:
+            lb.config(
+                bg="#ffffff",
+                fg=TEXT,
+                selectbackground=GREEN,
+                selectforeground="black",
+                relief="flat",
+                borderwidth=0
+            )
 
-        self.label_cavalier3 = tk.Label(
-            self, textvariable=self.varcavalier, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
-
-        self.label_cavalier6 = tk.Label(
-            self, textvariable=self.varsemaine2, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
-
-        self.label_cavalier4 = tk.Label(
-            self, textvariable=self.varcavalier1, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
-
-        self.label_cavalier7 = tk.Label(
-            self, textvariable=self.varsemaine3, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
-        self.label_cavalier5 = tk.Label(
-            self, textvariable=self.varcavalier2, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
-
-
-        self.boutton_absent = tk.Button(
-            self, bg='#8abd45', height=1, width=int(4*proportion_x), text="ABS", command=self.controller.absent, borderwidth=2)
-        self.boutton_correction = tk.Button(
-            self, bg='#8abd45', height=1, text="correction", command=self.controller.correction)
-        # Initialisation des variables de contrôle
-
-
-        # Liste déroulante pour les élèves
-        self.eleve_listbox = tk.Listbox(self,name="eleve_listbox", yscrollcommand=True)
-
-        self.eleve_rattrapage = tk.Entry(self)
-
-
-        self.label_eleve_rattrapage = tk.Label(
-            self, text="Ajouter un nom", font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
-        self.boutton_eleve_rattrapage = tk.Button(
-            self, width=int(8*proportion_x), bg='#8abd45', text="rattrapage", command=self.controller.ajouter_rattrapage)
-
-        self.theme_entry = tk.Entry(self)
-
-        self.label_theme = tk.Label(
-            self, text="Ajouter un theme", font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
-        self.boutton_theme = tk.Button(
-            self, width=int(14*proportion_x), bg='#8abd45', text="ajout du theme", command=self.controller.ajouter_theme)
-        self.label_theme_actuelle = tk.Label(
-            self, textvariable=self.theme, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
-        self.label_theme_avant1 = tk.Label(
-            self, textvariable=self.theme1, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
-        self.label_theme_avant2 = tk.Label(
-            self, textvariable=self.theme2, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
-        self.label_theme_avant3 = tk.Label(
-            self, textvariable=self.theme3, font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')
-        
-
-
-        # Association de la fonction à l'événement de relâchement du bouton de la souris
         self.eleve_listbox.bind('<<ListboxSelect>>', self.controller.items_selected)
-
-        # Liste déroulante pour les chevaux
-        self.cheval_listbox = tk.Listbox(self,name="cheval_listbox", height=int(47*proportion_y))
-
-
-
-
-        # Association de la fonction à l'événement de relâchement du bouton de la souris
         self.cheval_listbox.bind('<<ListboxSelect>>', self.controller.items_selected_cheval)
 
-        # Zone de texte pour afficher le planning
-        self.visu_fichier = tk.Text(self, width=int(70*proportion_x),height=int(24*proportion_y))
-        self.visu_fichier.config(state='disabled')
+        # PREVIEW
+        self.visu_fichier = self.style_textbox(
+            width=int(500*self.proportion_x),
+            height=int(380*self.proportion_y)
+        )
+        # self.visu_fichier.config(bg="#ffffff", fg=TEXT, insertbackground="black", relief="flat")
 
-        self.label_visu_fichier = tk.Label(
-            self, text="PREVISUALISATION", font=("Corbel", int(14*proportion_x)), bg='#8abd45')
+        self.label_visu_fichier = self.style_label("PREVISUALISATION", size=14, bold=True)
 
+        # HISTORIQUE
+        self.label_historique = self.style_label("HISTORIQUE", size=13, bold=True)
 
-        # Étiquette pour afficher des informations sur l'ajout
-        self.label_ajout = tk.Label(self, textvariable=self.varajout,
-                            font=int(20*proportion_x), bg='#ffffff')
+        self.historique = self.style_textbox(
+            width=int(450*self.proportion_x),
+            height=int(280*self.proportion_y)
+        )
+        # self.historique.config(bg="#ffffff", fg=TEXT, insertbackground="black", relief="flat")
 
+        # HEURES
+        self.label_heure_cheval = self.style_label(textvar=self.varheure_cheval)
 
-        # Bouton pour ajouter une entrée
-        self.boutton_ajouter = tk.Button(
-            self, text="Ajouter", command=self.controller.ajouter, width=int(11*proportion_x), height=int(2*proportion_y), bg='#8abd45')
+        self.heure_listebox = tk.Listbox(self)
+        self.heure_listebox.config(
+            bg="#ffffff",
+            fg=TEXT,
+            selectbackground=GREEN,
+            relief="flat",
+            borderwidth=0
+        )
 
-
-        # Bouton pour supprimer une entrée
-        self.boutton_supprimer = tk.Button(
-            self, text="Supprimer", command=self.controller.supprimer, width=int(11*proportion_x), height=int(2*proportion_y), bg='#8abd45')
-
-
-        # Bouton pour enregistrer les modifications
-        self.boutton_enregistrer = tk.Button(
-            self, text="ENREGISTRER", command=self.controller.ecrire_fichier, width=12, font=("Helvetica", 18, "bold"), bg='#000000', fg='#ffffff')
-
-
-        # Étiquette pour afficher un message après l'enregistrement
-        self.label_enregistrer = tk.Label(
-            self, text="Le fichier a bien été enregistré", font=("Corbel", int(13*proportion_x)), bg='#b4b4b4')  # le fichier à bien été enregistré
-        self.label_enregistrer.config(fg="#b4b4b4")
-
-        # Étiquette pour afficher l'heure de travail du cheval
-        self.label_heure_cheval = tk.Label(
-            self, textvariable=self.varheure_cheval, font=("Corbel", int(13*proportion_x)), bg='#8abd45')
-
-
-        # Liste déroulante pour les heures de travail
-        self.heure_listebox = tk.Listbox(self,name="heure_listebox", width=int(25*proportion_x), height=int(5*proportion_y))
-
-
-
-
-        self.bouton_ouvrir_excel = tk.Button(
-            self, text="ouvrir", bg="#8abd45", command=self.controller.ouvrir_excel)
-
-        self.bouton_rafraichir = tk.Button(
-            self, text="rafraichir", bg="#8abd45", command=self.controller.rafraichir)
-
-        self.bouton_word = tk.Button(
-            self, text="word", bg="#8abd45", command=self.controller.ecrire_word)
-
-        self.bouton_mail = tk.Button(
-            self, text="mail", bg="#8abd45", command=self.controller.ecrire_mail)
-
-        self.bouton_fusion = tk.Button(
-            self, text="fusion", bg="#8abd45", command=self.controller.fusion)
-
-        # Fonction appelée lorsqu'un élément est sélectionné dans la liste des heures de travail
-
-
-        # Association de la fonction à l'événement de relâchement du bouton de la souris
         self.heure_listebox.bind('<<ListboxSelect>>', self.controller.items_selected_heure_cheval)
 
-        # Étiquette pour afficher l'historique
-        self.label_historique = tk.Label(
-            self, text="HISTORIQUE", font=("Corbel", int(13*proportion_x)), bg='#8abd45')
-
-        # Zone de texte pour afficher l'historique
-        self.historique = tk.Text(self, width=int(60*proportion_x), height=int(13*proportion_y))
-        self.historique.config(state='disabled')
-
-        # Création d'une liste déroulante pour sélectionner l'heure
-        self.listeCombo = ttk.Combobox(self, height=int(10*proportion_y), width=int(40*proportion_x))
-
-
+        # COMBO
+        self.listeCombo = ttk.Combobox(self, values=[])
         self.listeCombo.bind("<<ComboboxSelected>>", self.controller.action)
-        
-    def place_widget(self,proportion_x,proportion_y):
-        self.label_jour.place(x=int(240 * proportion_x), y=int(70 * proportion_y))
-        self.label_heure.place(x=int(150 * proportion_x), y=int(145 * proportion_y))
-        self.title_label.place(x=int(60 * proportion_x), y=int(35 * proportion_y))
-        self.boutton_avancer_heure.place(x=int(65 * proportion_x), y=int(140 * proportion_y))
-        self.boutton_reculer_heure.place(x=int(260 * proportion_x), y=int(140 * proportion_y))
-        self.label_cavalier.place(x=int(470 * proportion_x), y=int(70 * proportion_y))
-        self.label_cavalier2.place(x=int(470 * proportion_x), y=int(100 * proportion_y))
-        self.label_cavalier3.place(x=int(650 * proportion_x), y=int(100 * proportion_y))
-        self.label_cavalier6.place(x=int(470 * proportion_x), y=int(150 * proportion_y))
-        self.label_cavalier4.place(x=int(650 * proportion_x), y=int(150 * proportion_y))
-        self.label_cavalier7.place(x=int(470 * proportion_x), y=int(200 * proportion_y))
-        self.label_cavalier5.place(x=int(650 * proportion_x), y=int(200 * proportion_y))
-        self.boutton_absent.place(x=int(755 * proportion_x), y=int(100 * proportion_y))
-        self.boutton_correction.place(x=int(810 * proportion_x), y=int(100 * proportion_y))
-        self.eleve_listbox.place(x=int(133 * proportion_x), y=int(170 * proportion_y))
-        self.eleve_rattrapage.place(x=int(133 * proportion_x), y=int(390 * proportion_y))
-        self.label_eleve_rattrapage.place(x=int(137 * proportion_x), y=int(360 * proportion_y))
-        self.boutton_eleve_rattrapage.place(x=int(160 * proportion_x), y=int(420 * proportion_y))
-        self.cheval_listbox.place(x=int(330 * proportion_x), y=int(35 * proportion_y))
-        self.visu_fichier.place(x=int(900 * proportion_x), y=int(395 * proportion_y))
-        self.label_visu_fichier.place(x=int(900 * proportion_x), y=int(365 * proportion_y))
-        self.label_ajout.place(x=int(470 * proportion_x), y=int(400 * proportion_y))
-        self.boutton_ajouter.place(x=int(570 * proportion_x), y=int(480 * proportion_y))
-        self.boutton_supprimer.place(x=int(670 * proportion_x), y=int(480 * proportion_y))
-        self.boutton_enregistrer.place(x=int(570 * proportion_x), y=int(530 * proportion_y))
-        self.label_enregistrer.place(x=int(560 * proportion_x), y=int(585 * proportion_y))
-        self.label_heure_cheval.place(x=int(470 * proportion_x), y=int(250 * proportion_y))
-        self.heure_listebox.place(x=int(470 * proportion_x), y=int(280 * proportion_y))
-        self.historique.place(x=int(900 * proportion_x), y=int(70 * proportion_y))
-        self.label_historique.place(x=int(900 * proportion_x), y=int(40 * proportion_y))
-        self.label_user.place(x=int(60 * proportion_x), y=int(70 * proportion_y))
-        self.listeCombo.place(x=int(65 * proportion_x), y=int(100 * proportion_y))
-        self.bouton_ouvrir_excel.place(x=int(1400 * proportion_x), y=int(60 * proportion_y))
-        self.bouton_rafraichir.place(x=int(1400 * proportion_x), y=int(100 * proportion_y))
-        self.label_theme.place(x=int(133 * proportion_x), y=int(460 * proportion_y))
-        self.theme_entry.place(x=int(133 * proportion_x), y=int(490 * proportion_y))
-        self.boutton_theme.place(x=int(140 * proportion_x), y=int(520 * proportion_y))
-        self.label_theme_actuelle.place(x=int(160 * proportion_x), y=int(550 * proportion_y))
-        self.label_theme_avant1.place(x=int(650 * proportion_x), y=int(125 * proportion_y))
-        self.label_theme_avant2.place(x=int(650 * proportion_x), y=int(175 * proportion_y))
-        self.label_theme_avant3.place(x=int(650 * proportion_x), y=int(225 * proportion_y))
-        self.bouton_word.place(x=int(1400 * proportion_x), y=int(140 * proportion_y))
-        self.bouton_mail.place(x=int(1400 * proportion_x), y=int(180 * proportion_y))
-        self.bouton_fusion.place(x=int(1400 * proportion_x), y=int(220 * proportion_y))
-        
-        # self.info.place(x=int(460 * proportion_x), y=int(35 * proportion_y))
-        # self.info2.place(x=int(1400 * proportion_x), y=int(260 * proportion_y))
-        
-        
 
+        # ENTRIES
+        self.eleve_rattrapage = self.style_entry("Ajouter un nom")
+        self.theme_entry = self.style_entry("Ajouter un theme")
 
-    def place_image(self,proportion_x,proportion_y):
+        # THEME
+        self.label_theme = self.style_label("Theme")
+        self.boutton_theme = self.style_button("ajout du theme", self.controller.ajouter_theme)
+
+        # ACTION BUTTONS
+        self.boutton_ajouter = self.style_button("Ajouter", self.controller.ajouter)
+        self.boutton_supprimer = self.style_button("Supprimer", self.controller.supprimer)
+        self.boutton_enregistrer = self.style_button("ENREGISTRER", self.controller.ecrire_fichier)
+
+        # EXTRA
+        self.bouton_ouvrir_excel = self.style_button("ouvrir", self.controller.ouvrir_excel)
+        self.bouton_rafraichir = self.style_button("rafraichir", self.controller.rafraichir)
+        self.bouton_word = self.style_button("word", self.controller.ecrire_word)
+        self.bouton_mail = self.style_button("mail", self.controller.ecrire_mail)
+        self.bouton_fusion = self.style_button("fusion", self.controller.fusion)
+
+    # ---------------- PLACE ---------------- #
+    def place_widget(self):
+
+        px = self.proportion_x
+        py = self.proportion_y
+
+        self.title_label.place(x=int(60 * px), y=int(35 * py))
+        self.label_user.place(x=int(60 * px), y=int(70 * py))
+
+        self.boutton_avancer_heure.place(x=int(65 * px), y=int(140 * py))
+        self.boutton_reculer_heure.place(x=int(260 * px), y=int(140 * py))
+
+        self.label_cavalier.place(x=int(470 * px), y=int(70 * py))
+
+        self.label_cavalier2.place(x=int(470 * px), y=int(100 * py))
+        self.label_cavalier3.place(x=int(650 * px), y=int(100 * py))
+        self.label_cavalier6.place(x=int(470 * px), y=int(150 * py))
+        self.label_cavalier4.place(x=int(650 * px), y=int(150 * py))
+        self.label_cavalier7.place(x=int(470 * px), y=int(200 * py))
+        self.label_cavalier5.place(x=int(650 * px), y=int(200 * py))
+
+        self.boutton_absent.place(x=int(755 * px), y=int(100 * py))
+        self.boutton_correction.place(x=int(810 * px), y=int(100 * py))
+
+        self.eleve_listbox.place(x=int(133 * px), y=int(170 * py))
+        self.cheval_listbox.place(x=int(330 * px), y=int(35 * py))
+
+        self.visu_fichier.place(x=int(900 * px), y=int(395 * py))
+        self.label_visu_fichier.place(x=int(900 * px), y=int(365 * py))
+
+        self.label_historique.place(x=int(900 * px), y=int(40 * py))
+        self.historique.place(x=int(900 * px), y=int(70 * py))
+
+        self.label_heure_cheval.place(x=int(470 * px), y=int(250 * py))
+        self.heure_listebox.place(x=int(470 * px), y=int(280 * py))
+
+        self.listeCombo.place(x=int(65 * px), y=int(100 * py))
+
+        self.eleve_rattrapage.place(x=int(133 * px), y=int(390 * py))
+        self.theme_entry.place(x=int(133 * px), y=int(490 * py))
+
+        self.label_theme.place(x=int(133 * px), y=int(460 * py))
+        self.boutton_theme.place(x=int(140 * px), y=int(520 * py))
+
+        self.boutton_ajouter.place(x=int(570 * px), y=int(480 * py))
+        self.boutton_supprimer.place(x=int(670 * px), y=int(480 * py))
+        self.boutton_enregistrer.place(x=int(570 * px), y=int(530 * py))
+
+        self.bouton_ouvrir_excel.place(x=int(1400 * px), y=int(60 * py))
+        self.bouton_rafraichir.place(x=int(1400 * px), y=int(100 * py))
+        self.bouton_word.place(x=int(1400 * px), y=int(140 * py))
+        self.bouton_mail.place(x=int(1400 * px), y=int(180 * py))
+        self.bouton_fusion.place(x=int(1400 * px), y=int(220 * py))
+
+    # ---------------- IMAGE ---------------- #
+    def place_image(self, proportion_x, proportion_y):
         self.contr_image.set_background(self, "image_fond.png")
-        self.image1 = self.contr_image.image(self, "image1.png", int(2388/8.5*proportion_x ), int(1668/8.5*proportion_y))
+
+        self.image1 = self.contr_image.image(self, "image1.png", int(2388/8.5*proportion_x), int(1668/8.5*proportion_y))
         self.image2 = self.contr_image.image(self, "image2.png", int(2388/8.5*proportion_x), int(1668/8.5*proportion_y))
         self.image3 = self.contr_image.image(self, "image3.png", int(2388/8.5*proportion_x), int(1668/8.5*proportion_y))
+
         self.image1.place(x=int(535 * proportion_x), y=int(606 * proportion_y))
         self.image2.place(x=int(70 * proportion_x), y=int(600 * proportion_y))
         self.image3.place(x=int(680 * proportion_x), y=int(220 * proportion_y))
