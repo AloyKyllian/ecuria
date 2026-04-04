@@ -813,41 +813,134 @@ def recup_donne():
     Returns:
         Aucun.
     """
-    logger.info("Récupération des données depuis un fichier Excel")
     global \
-        ancient_nom, \
-        nom_fichier, \
-        planning_theme, \
-        planning_theme1, \
-        planning_theme2, \
-        planning_theme3
+    ancient_nom, \
+    nom_fichier, \
+    planning_theme, \
+    planning_theme1, \
+    planning_theme2, \
+    planning_theme3
+    files = []
+    logger.info("Récupération des données depuis un fichier Excel")
+    
+    ftp = Ftp("86.249.193.54", "lena", "1234")
+    print(ftp.download_files_from_ftp())
+    
+    # logger.info("NOUVELLE FONCTIONNALIT%s",files)
+    
+    
+    listes_samedi,listes_mercredi =  ftp.download_files_from_ftp()
+    
+    listes_semaine = []  # si vide, le dossier apparaîtra vide
+
+    ftp_data = {
+        "samedi": listes_samedi,
+        "mercredi": listes_mercredi,
+        "semaine": listes_semaine
+    }
+
+    root = tk.Toplevel(window)  
+    root.title("Listes FTP")
+    root.geometry("600x400")
+
+    tree = ttk.Treeview(root)
+    tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+    tree.heading("#0", text="Listes disponibles", anchor="w")
+
+
+    # ---------------- FUNCTIONS ----------------
+    def load_tree(data):
+        tree.delete(*tree.get_children())
+
+        for dossier, fichiers in data.items():
+            parent = tree.insert("", "end", text=dossier, open=False)
+
+            for full_path in fichiers:
+                nom_fichier = full_path.split("/")[-1]
+                tree.insert(parent, "end", text=nom_fichier, values=(full_path,))
+
+
+    def download_selected():
+        global files
+        item = tree.focus()
+        if not item:
+            return
+
+        parent = tree.parent(item)
+        if not parent:
+            return  # clic sur un dossier
+
+        full_path = tree.item(item, "values")[0]
+        filename = full_path.split("/")[-1]
+
+
+        files = ftp.download_selected_and_recent_files(filename)
+
+        messagebox.showinfo("Succès", f"{filename} téléchargé")
+        root.after(100, root.destroy)
+
+
+    def close_app():
+        root.destroy()
+
+    # ---------------- EVENTS ----------------
+    tree.bind("<Double-1>", lambda e: download_selected())
+    root.protocol("WM_DELETE_WINDOW", close_app)
+
+
+    # ---------------- INIT ----------------
+    load_tree(ftp_data)
+            
+    
+    root.wait_window()  
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    # print("files :",files)
+    
+    
+    
+
     interface_default()
-    tk.messagebox.showinfo(
-        title="Sélection de fichier",
-        message="Veuillez sélectionner le fichier que vous souhaitez compléter.",
-    )
-    chemin = tk.Tk()
-    chemin.withdraw()  # pour ne pas afficher la fenêtre Tk
-    path = askopenfilename()
-    nom_fichier = []
-    folder = path.split("/")
-    name = folder[-1]
-    nom_fichier.append(name)
-    # print(name)
-    logger.debug("name %s", name)
-    if "mercredi" in name.lower():
-        jour.set_mercredi()
-    elif "samedi" in name.lower():
-        jour.set_samedi()
-    elif "semaine" in name.lower():
-        jour.set_semaine()
-    else:
-        tk.messagebox.showerror(
-            title="Erreur de fichier",
-            message="Le fichier sélectionné n'est pas un fichier de planning.",
-        )
-        logger.warning("Le fichier %s n'est pas un fichier de planning.", name)
-        return
+    
+    # tk.messagebox.showinfo(
+    #     title="Sélection de fichier",
+    #     message="Veuillez sélectionner le fichier que vous souhaitez compléter.",
+    # )
+    # chemin = tk.Tk()
+    # chemin.withdraw()  # pour ne pas afficher la fenêtre Tk
+    # path = askopenfilename()
+    # nom_fichier = []
+    # folder = path.split("/")
+    # name = folder[-1]
+    # nom_fichier.append(name)
+    # # print(name)
+    # logger.debug("name %s", name)
+    # if "mercredi" in name.lower():
+    #     jour.set_mercredi()
+    # elif "samedi" in name.lower():
+    #     jour.set_samedi()
+    # elif "semaine" in name.lower():
+    #     jour.set_semaine()
+    # else:
+    #     tk.messagebox.showerror(
+    #         title="Erreur de fichier",
+    #         message="Le fichier sélectionné n'est pas un fichier de planning.",
+    #     )
+    #     logger.warning("Le fichier %s n'est pas un fichier de planning.", name)
+    #     return
+    
+    
+    
+    name = files[0]
+    nom_fichier = files
+    
     planning_theme = {}
     planning_theme1 = {}
     planning_theme2 = {}
@@ -856,10 +949,8 @@ def recup_donne():
     planning.liste_heure.clear()
 
     date = extract_date_from_filename(name)
-    # print("recup_donne    date",date)
     logger.debug("date %s", date)
     planning.set_liste_eleve(dict_eleve[jour.j].copy())
-    # print("recup_donne    planning.liste_eleve",planning.liste_eleve)
     logger.debug("planning.liste_eleve %s", planning.liste_eleve)
     varjour.set(jour.j + " " + date.strftime("%d-%m-%y"))
 

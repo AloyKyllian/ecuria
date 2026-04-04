@@ -92,12 +92,12 @@ class LoggerCounter(logging.Filter):
         if LoggerCounter._already_printed:
             return
         LoggerCounter._already_printed = True
-        if LoggerCounter._global_warning_count > 0 or LoggerCounter._global_error_count > 0 and LoggerCounter._user_name.lower() != "admin":
-            envoyer_email("aloykyllian31520@gmail.com","app.log", "app.log", "Rapport d'erreurs Ecuria", [])
-        self.logger.info(
-            f"Fin du programme : {LoggerCounter._global_warning_count} warning(s), "
-            f"{LoggerCounter._global_error_count} erreur(s)."
-        )
+        # if LoggerCounter._global_warning_count > 0 or LoggerCounter._global_error_count > 0 and LoggerCounter._user_name.lower() != "admin":
+        #     # envoyer_email("aloykyllian31520@gmail.com","app.log", "app.log", "Rapport d'erreurs Ecuria", [])
+        # self.logger.info(
+        #     f"Fin du programme : {LoggerCounter._global_warning_count} warning(s), "
+        #     f"{LoggerCounter._global_error_count} erreur(s)."
+        # )
 
     def _handle_exception(self, exc_type, exc_value, exc_traceback):
         self.logger.error("Exception non capturée", exc_info=(exc_type, exc_value, exc_traceback))

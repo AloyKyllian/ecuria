@@ -3,6 +3,7 @@ from io import BytesIO
 from openpyxl import load_workbook
 from datetime import datetime
 from Log import LoggerCounter
+import os
 
 logger = LoggerCounter(name="Ftp").logger
 
@@ -13,8 +14,10 @@ class Ftp:
         self.mot_de_passe = mot_de_passe
         self.ftp = FTP(self.adresse_serveur)
 
-    def liste_fichiers(self):
+    def liste_fichiers(self, root = None):
         self.connexion()
+        if root :
+            self.ftp.cwd(root)
         fichiers = self.ftp.nlst()
         self.deconnexion()
         return fichiers
@@ -50,10 +53,10 @@ class Ftp:
     def download_files_from_ftp(self):
         self.connexion()
         logger.info("Récupération de la liste des fichiers depuis le FTP")
-        files = self.ftp.nlst()
+        files = self.ftp.nlst("liste/liste_samedi") + self.ftp.nlst("liste/liste_mercredi")
 
-        samedi_files, mercredi_files = [], []
-
+        samedi_files, mercredi_files = [],[]
+        
         for file in files:
             if "samedi" in file.lower():
                 samedi_files.append((file, self.extract_date_from_filename(file)))
@@ -92,16 +95,27 @@ class Ftp:
     def download_files(self, files):
         self.connexion()
         logger.info("Téléchargement des fichiers : %s", files)
+        print(self.ftp.nlst())
+
         for file in files:
+            local_path = file  # exemple : "liste/liste_samedi/liste samedi 14-09-2024.xlsx"
+            local_dir = os.path.dirname(local_path)
+
+            if not os.path.exists(local_dir):
+                os.makedirs(local_dir)  # crée tous les dossiers manquants
             with open(file, "wb") as local_file:
                 self.ftp.retrbinary(f"RETR {file}", local_file.write)
         self.deconnexion()
 
-    def download_selected_and_recent_files(self, day, selected_file):
+    def download_selected_and_recent_files(self, selected_file):
         samedi_file_names, mercredi_file_names = self.download_files_from_ftp()
-        files = samedi_file_names if day.lower() == "samedi" else mercredi_file_names
-        selected_ind = next(i for i, f in enumerate(files) if f == selected_file)
+        
+        files = samedi_file_names if  "samedi" in selected_file.lower() else mercredi_file_names
+        print(selected_file, files)
+        selected_ind = next(i for i, f in enumerate(files) if selected_file in f)
+        
         self.download_files(files[selected_ind:selected_ind + 4])
+        
         return files[selected_ind:selected_ind + 4]
 
     def supprimer(self, fiche):
