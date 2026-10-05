@@ -1,0 +1,104 @@
+import customtkinter as ctk
+
+class GestionPlanningUI(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+
+        # Configuration de la fenêtre
+        self.title("Gestion Planning Équestre - v2.0")
+        self.geometry("1300x850")
+        
+        # Forcer le mode clair
+        ctk.set_appearance_mode("light")
+        ctk.set_default_color_theme("blue") 
+
+        # Configuration de la grille principale (3 colonnes)
+        self.grid_columnconfigure(0, weight=1) # Navigation
+        self.grid_columnconfigure(1, weight=2) # Gestion/Attribution
+        self.grid_columnconfigure(2, weight=2) # Prévisualisation
+        self.grid_rowconfigure(0, weight=1)
+
+        # --- STYLE DES SECTIONS (Frames) ---
+        frame_kwargs = {"corner_radius": 15, "border_width": 1, "border_color": "#D0D0D0"}
+
+        # --- COLONNE GAUCHE ---
+        self.left_panel = ctk.CTkFrame(self, fg_color="#F5F5F5", **frame_kwargs)
+        self.left_panel.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+
+        ctk.CTkLabel(self.left_panel, text="🗓️ CALENDRIER", font=("Arial", 18, "bold")).pack(pady=15)
+        
+        self.date_label = ctk.CTkLabel(self.left_panel, text="Mercredi 18-10-23", font=("Arial", 14, "italic"))
+        self.date_label.pack(pady=5)
+        
+        # Navigation
+        nav_frame = ctk.CTkFrame(self.left_panel, fg_color="transparent")
+        nav_frame.pack(pady=10, padx=10, fill="x")
+        ctk.CTkButton(nav_frame, text="<", width=40, fg_color="#808080").pack(side="left", padx=5)
+        ctk.CTkButton(nav_frame, text="Suivant", fg_color="#808080").pack(side="left", fill="x", expand=True, padx=5)
+
+        # REMPLACEMENT DU SEPARATOR (Ligne horizontale manuelle)
+        self.line = ctk.CTkFrame(self.left_panel, height=2, fg_color="#D0D0D0")
+        self.line.pack(fill="x", padx=20, pady=20)
+
+        # Ajouts
+        ctk.CTkLabel(self.left_panel, text="Ajouter Cavalier", font=("Arial", 13, "bold")).pack(anchor="w", padx=25)
+        self.entry_nom = ctk.CTkEntry(self.left_panel, placeholder_text="Nom...", height=35)
+        self.entry_nom.pack(pady=5, padx=20, fill="x")
+        
+        ctk.CTkButton(self.left_panel, text="Rattrapage", fg_color="#27ae60", hover_color="#219150").pack(pady=5, padx=20, fill="x")
+
+        ctk.CTkLabel(self.left_panel, text="Ajouter Thème", font=("Arial", 13, "bold")).pack(anchor="w", padx=25, pady=(15,0))
+        self.entry_theme = ctk.CTkEntry(self.left_panel, placeholder_text="Thème...", height=35)
+        self.entry_theme.pack(pady=5, padx=20, fill="x")
+        ctk.CTkButton(self.left_panel, text="Ajouter au planning", fg_color="#2980b9").pack(pady=5, padx=20, fill="x")
+
+        # --- COLONNE CENTRALE ---
+        self.center_panel = ctk.CTkFrame(self, fg_color="white", **frame_kwargs)
+        self.center_panel.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+
+        ctk.CTkLabel(self.center_panel, text="🏇 ATTRIBUTION DES CHEVAUX", font=("Arial", 18, "bold")).pack(pady=15)
+
+        # Liste chevaux
+        self.scroll_horses = ctk.CTkScrollableFrame(self.center_panel, label_text="Chevaux disponibles", label_font=("Arial", 12, "bold"))
+        self.scroll_horses.pack(padx=15, pady=5, fill="both", expand=True)
+        
+        # Liste fictive avec compteurs (comme sur ton image)
+        chevaux = ["VIOLETTE", "NEVA", "BRIOSSO", "PEPITTE", "PANDA", "NUAGE", "HOUSTON"]
+        for nom in chevaux:
+            btn_h = ctk.CTkCheckBox(self.scroll_horses, text=f"0  {nom}")
+            btn_h.pack(anchor="w", pady=3)
+
+        # Zone d'infos cavalier (bas du centre)
+        self.info_box = ctk.CTkFrame(self.center_panel, fg_color="#EBF5FB", corner_radius=10)
+        self.info_box.pack(padx=15, pady=15, fill="x")
+        ctk.CTkLabel(self.info_box, text="INFOS : SEGOVIA - 13H30 LENA", font=("Arial", 12, "bold"), text_color="#2980b9").pack(pady=10)
+
+        self.btn_save = ctk.CTkButton(self.center_panel, text="💾 ENREGISTRER LA SÉANCE", font=("Arial", 14, "bold"), height=45, fg_color="#2c3e50")
+        self.btn_save.pack(pady=(0, 20), padx=20, fill="x")
+
+        # --- COLONNE DROITE ---
+        self.right_panel = ctk.CTkFrame(self, fg_color="#F5F5F5", **frame_kwargs)
+        self.right_panel.grid(row=0, column=2, padx=10, pady=10, sticky="nsew")
+
+        self.tabview = ctk.CTkTabview(self.right_panel, fg_color="white")
+        self.tabview.pack(padx=15, pady=15, fill="both", expand=True)
+        self.tabview.add("Prévisualisation")
+        self.tabview.add("Historique")
+
+        # Zone de texte
+        self.preview_text = ctk.CTkTextbox(self.tabview.tab("Prévisualisation"), font=("Consolas", 12), border_width=1)
+        self.preview_text.pack(fill="both", expand=True, padx=5, pady=5)
+        self.preview_text.insert("0.0", "Planning du Mercredi :\n\n13H30 LENA : NATHANAELLE avec SEGOVIA\n14H00 LENA : LEONIE avec NAVARA")
+
+        # Boutons d'exportation
+        self.export_frame = ctk.CTkFrame(self.right_panel, fg_color="transparent")
+        self.export_frame.pack(pady=15)
+        
+        btn_style = {"width": 90, "height": 32, "font": ("Arial", 11, "bold")}
+        ctk.CTkButton(self.export_frame, text="📄 Word", **btn_style).grid(row=0, column=0, padx=5)
+        ctk.CTkButton(self.export_frame, text="📧 Mail", **btn_style).grid(row=0, column=1, padx=5)
+        ctk.CTkButton(self.export_frame, text="🔗 Fusion", **btn_style).grid(row=0, column=2, padx=5)
+
+if __name__ == "__main__":
+    app = GestionPlanningUI()
+    app.mainloop()

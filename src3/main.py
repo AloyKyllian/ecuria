@@ -58,13 +58,28 @@ class MainApplication(tk.Tk):
         self.label_version = tk.Label(self, text="Version " + str(version), bg='#b4b4b4')
         self.label_version.place(x=int(1395*self.proportion_x), y=int(780*self.proportion_y))
         # self.controller.get_image_controller().set_background(self, "image\\image_fond.png")
-
+    
     def create_views(self):
-        for V in (WaitingView, PrincipalView, ConfigView):
+        # Vues avec anciens paramètres (si tu les gardes)
+        for V in (WaitingView, ConfigView):
             view_name = V.__name__
-            frame = V(parent=self.container, controller=self.controller, proportion_x=self.proportion_x, proportion_y=self.proportion_y)
+            frame = V(
+                parent=self.container,
+                controller=self.controller,
+                proportion_x=self.proportion_x,
+                proportion_y=self.proportion_y
+            )
             self.views[view_name] = frame
             frame.grid(row=0, column=0, sticky="nsew")
+
+        # Vue principale (nouvelle version sans proportions)
+        frame = PrincipalView(
+            parent=self.container,
+            controller=self.controller
+        )
+        view_name = PrincipalView.__name__
+        self.views[view_name] = frame
+        frame.grid(row=0, column=0, sticky="nsew")
 
         self.show_view("WaitingView")
 
